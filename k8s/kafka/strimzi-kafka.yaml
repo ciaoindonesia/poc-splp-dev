@@ -1,0 +1,153 @@
+## Strimzi KRaft Kafka — KafkaNodePool + Kafka CR (POC single-node)
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: combined
+  namespace: messaging
+  labels:
+    strimzi.io/cluster: splp-kafka
+spec:
+  replicas: 1
+  roles:
+    - controller
+    - broker
+  storage:
+    type: ephemeral
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+---
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: splp-kafka
+  namespace: messaging
+  annotations:
+    strimzi.io/node-pools: enabled
+    strimzi.io/kraft: enabled
+spec:
+  kafka:
+    version: 4.1.0
+    metadataVersion: "4.1-IV0"
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: external
+        port: 9094
+        type: nodeport
+        tls: false
+        configuration:
+          bootstrap:
+            nodePort: 30292
+    config:
+      auto.create.topics.enable: "true"
+      log.retention.hours: 24
+      message.max.bytes: "5242880"
+      offsets.topic.replication.factor: "1"
+      transaction.state.log.replication.factor: "1"
+      transaction.state.log.min.isr: "1"
+      default.replication.factor: "1"
+      min.insync.replicas: "1"
+  entityOperator:
+    topicOperator: {}
+---
+## Provision topics via KafkaTopic CRs
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: splp-data-exchange
+  namespace: messaging
+  labels:
+    strimzi.io/cluster: splp-kafka
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: "86400000"
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: splp-api-events
+  namespace: messaging
+  labels:
+    strimzi.io/cluster: splp-kafka
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: "86400000"
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: splp-notifications
+  namespace: messaging
+  labels:
+    strimzi.io/cluster: splp-kafka
+spec:
+  partitions: 1
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: splp-audit-logs
+  namespace: messaging
+  labels:
+    strimzi.io/cluster: splp-kafka
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: "604800000"
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: dukcapil-nik-verify
+  namespace: messaging
+  labels:
+    strimzi.io/cluster: splp-kafka
+spec:
+  partitions: 2
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: bpjs-kepesertaan
+  namespace: messaging
+  labels:
+    strimzi.io/cluster: splp-kafka
+spec:
+  partitions: 2
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: djp-npwp-verify
+  namespace: messaging
+  labels:
+    strimzi.io/cluster: splp-kafka
+spec:
+  partitions: 2
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: kemensos-bansos
+  namespace: messaging
+  labels:
+    strimzi.io/cluster: splp-kafka
+spec:
+  partitions: 2
+  replicas: 1

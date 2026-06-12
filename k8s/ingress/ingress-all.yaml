@@ -1,0 +1,164 @@
+## SPLP Ingress Resources — pocsplp.com
+## Requires nginx-ingress-controller
+## /etc/hosts: 127.0.0.1 pocsplp.com api.pocsplp.com apim.pocsplp.com id.pocsplp.com grafana.pocsplp.com clickhouse.pocsplp.com
+
+---
+## SPLP Portal
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: splp-portal
+  namespace: splp
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: pocsplp.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: splp-portal
+                port:
+                  number: 80
+---
+## SPLP Backend API
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: splp-backend
+  namespace: splp
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api-backend.pocsplp.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: splp-backend
+                port:
+                  number: 3002
+---
+## WSO2 API Manager — Carbon Console + Gateway
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wso2-apim
+  namespace: wso2
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/proxy-ssl-verify: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: apim.pocsplp.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wso2-apim
+                port:
+                  number: 9443
+    - host: api.pocsplp.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wso2-apim
+                port:
+                  number: 8280
+---
+## WSO2 Identity Server
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wso2-is
+  namespace: wso2
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/proxy-ssl-verify: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: id.pocsplp.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wso2-is
+                port:
+                  number: 9444
+---
+## Grafana
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: grafana.pocsplp.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 80
+---
+## ClickHouse HTTP UI
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: clickhouse
+  namespace: splp
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: clickhouse.pocsplp.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: clickhouse
+                port:
+                  number: 8123

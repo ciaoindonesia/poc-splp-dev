@@ -1,0 +1,79 @@
+## Grafana Helm Values for SPLP POC
+adminUser: admin
+adminPassword: splp-grafana-2026
+
+service:
+  type: NodePort
+  nodePort: 30300
+
+persistence:
+  enabled: true
+  size: 2Gi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+grafana.ini:
+  server:
+    domain: localhost
+    root_url: "%(protocol)s://%(domain)s:3000"
+  auth.anonymous:
+    enabled: true
+    org_name: SPLP
+    org_role: Viewer
+    hide_version: false
+  security:
+    allow_embedding: true
+    cookie_samesite: none
+    cookie_secure: false
+  dashboards:
+    default_home_dashboard_path: /var/lib/grafana/dashboards/splp/overview.json
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: ClickHouse
+        type: grafana-clickhouse-datasource
+        uid: clickhouse-splp
+        url: http://clickhouse.splp.svc.cluster.local:8123
+        jsonData:
+          defaultDatabase: splp
+          username: splp_user
+          dialTimeout: 10
+          httpConnectionTimeout: 30
+        secureJsonData:
+          password: splp_pass_2026
+        isDefault: true
+      - name: Prometheus
+        type: prometheus
+        uid: prometheus-splp
+        url: http://prometheus-server.monitoring.svc.cluster.local:80
+        isDefault: false
+
+plugins:
+  - grafana-clickhouse-datasource
+
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: splp-dashboards
+        orgId: 1
+        folder: SPLP
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/splp
+
+dashboards:
+  splp:
+    overview:
+      url: https://raw.githubusercontent.com/grafana/grafana/main/public/app/plugins/datasource/prometheus/dashboards/prometheus-stats.json
+      datasource: Prometheus

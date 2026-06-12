@@ -1,0 +1,73 @@
+## Bitnami Kafka KRaft mode (no ZooKeeper) - POC single broker
+global:
+  storageClass: ""
+
+replicaCount: 1
+
+kraft:
+  enabled: true
+
+controller:
+  replicaCount: 1
+  persistence:
+    enabled: true
+    size: 5Gi
+
+broker:
+  replicaCount: 0
+
+persistence:
+  enabled: true
+  size: 5Gi
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+extraConfig: |
+  auto.create.topics.enable=true
+  log.retention.hours=24
+  message.max.bytes=5242880
+
+service:
+  type: NodePort
+  nodePorts:
+    client: 30292
+
+provisioning:
+  enabled: true
+  topics:
+    - name: splp.data.exchange
+      partitions: 3
+      replicationFactor: 1
+      config:
+        retention.ms: 86400000
+    - name: splp.api.events
+      partitions: 3
+      replicationFactor: 1
+      config:
+        retention.ms: 86400000
+    - name: splp.notifications
+      partitions: 1
+      replicationFactor: 1
+    - name: splp.audit.logs
+      partitions: 3
+      replicationFactor: 1
+      config:
+        retention.ms: 604800000
+    - name: dukcapil.nik.verify
+      partitions: 2
+      replicationFactor: 1
+    - name: bpjs.kepesertaan
+      partitions: 2
+      replicationFactor: 1
+    - name: djp.npwp.verify
+      partitions: 2
+      replicationFactor: 1
+    - name: kemensos.bansos
+      partitions: 2
+      replicationFactor: 1
