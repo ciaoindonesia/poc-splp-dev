@@ -7,8 +7,7 @@ service:
   nodePort: 30300
 
 persistence:
-  enabled: true
-  size: 2Gi
+  enabled: false
 
 resources:
   requests:
