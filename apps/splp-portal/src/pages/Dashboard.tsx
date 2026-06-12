@@ -8,11 +8,25 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend
 } from 'recharts'
-import { formatNumber, formatBytes, formatTimestamp } from '../lib/utils'
+import { formatNumber, formatBytes, formatTimestamp, deriveBackendUrl } from '../lib/utils'
 import {
   generateExchangeEvent, generateHourlyData,
   INITIAL_EVENTS, type ExchangeEvent
 } from '../lib/mockData'
+
+const BACKEND = deriveBackendUrl()
+
+type SvcHealth = { ok: boolean; latency?: number; error?: string }
+type HealthMap = Record<string, SvcHealth>
+
+const COMPONENTS: { name: string; key: string; detail: string; icon: string }[] = [
+  { name: 'WSO2 API Manager 4.3', key: 'WSO2 APIM',    detail: 'Port 9443 · OAuth2/Publisher', icon: '🔌' },
+  { name: 'WSO2 Identity Server', key: 'WSO2 IS',      detail: 'Port 9444 · OAuth2/OIDC',      icon: '🔐' },
+  { name: 'Apache Kafka (KRaft)', key: 'Kafka',        detail: '8 topics · 1 broker',          icon: '📨' },
+  { name: 'ClickHouse 24.3',      key: 'ClickHouse',   detail: 'splp DB · HTTP :8123',         icon: '🗄️' },
+  { name: 'Grafana 10.x',         key: 'Grafana',      detail: 'Port 3000 · dashboards',       icon: '📊' },
+  { name: 'SPLP Backend',         key: 'SPLP Backend', detail: 'Node.js · Express API',        icon: '⚙️' },
+]
 
 const HOURLY = generateHourlyData()
 
@@ -43,6 +57,7 @@ export default function Dashboard() {
   const [totalToday, setTotalToday] = useState(47832)
   const [successRate, setSuccessRate] = useState(99.2)
   const feedRef = useRef<HTMLDivElement>(null)
+  const [health, setHealth] = useState<HealthMap>({})
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -52,6 +67,17 @@ export default function Dashboard() {
       setSuccessRate(r => Math.min(99.9, Math.max(97.0, r + (Math.random() - 0.5) * 0.1)))
     }, 1500)
     return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    const fetchHealth = () =>
+      fetch(`${BACKEND}/api/health/services`)
+        .then(r => r.json())
+        .then(d => setHealth(d.services ?? {}))
+        .catch(() => {})
+    fetchHealth()
+    const t = setInterval(fetchHealth, 30_000)
+    return () => clearInterval(t)
   }, [])
 
   return (
@@ -179,26 +205,34 @@ export default function Dashboard() {
         <div className="card">
           <h3 className="section-title text-base mb-4">Status Komponen</h3>
           <div className="space-y-2.5">
-            {[
-              { name: 'WSO2 API Manager 4.3', status: 'up', detail: 'Port 9443 · 3 API aktif', icon: '🔌', uptime: '99.98%' },
-              { name: 'WSO2 Identity Server', status: 'up', detail: 'Port 9444 · OAuth2/OIDC', icon: '🔐', uptime: '99.95%' },
-              { name: 'Apache Kafka (KRaft)', status: 'up', detail: '8 topics · 1 broker', icon: '📨', uptime: '99.99%' },
-              { name: 'ClickHouse 24.3', status: 'up', detail: '5K rows/s · splp DB', icon: '🗄️', uptime: '99.97%' },
-              { name: 'Grafana 10.x', status: 'up', detail: 'Port 3000 · 3 dashboards', icon: '📊', uptime: '100%' },
-              { name: 'k3d poc-splp-dev', status: 'up', detail: '1 server · 2 agents', icon: '☸️', uptime: '100%' },
-            ].map(s => (
-              <div key={s.name} className="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-slate-50 transition-colors">
-                <span className="text-lg">{s.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-slate-800 truncate">{s.name}</span>
-                    <span className={`w-1.5 h-1.5 rounded-full ${s.status === 'up' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+            {COMPONENTS.map(s => {
+              const svc = health[s.key]
+              const up  = svc?.ok ?? false
+              const lat = svc?.latency
+              const loading = Object.keys(health).length === 0
+              return (
+                <div key={s.name} className="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-slate-50 transition-colors">
+                  <span className="text-lg">{s.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-800 truncate">{s.name}</span>
+                      {loading
+                        ? <span className="w-1.5 h-1.5 rounded-full bg-slate-300 animate-pulse" />
+                        : <span className={`w-1.5 h-1.5 rounded-full ${up ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                      }
+                    </div>
+                    <div className="text-[10px] text-slate-400">
+                      {svc?.error ? `⚠ ${svc.error.split(' ').slice(0,3).join(' ')}` : s.detail}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-slate-400">{s.detail}</div>
+                  <span className={`text-[10px] font-bold shrink-0 ${
+                    loading ? 'text-slate-400' : up ? 'text-emerald-600' : 'text-red-500'
+                  }`}>
+                    {loading ? '...' : up ? `${lat}ms` : 'Offline'}
+                  </span>
                 </div>
-                <span className="text-[10px] font-bold text-emerald-600 shrink-0">{s.uptime}</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </div>

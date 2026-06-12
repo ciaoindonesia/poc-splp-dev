@@ -19,11 +19,11 @@ resources:
 
 grafana.ini:
   server:
-    domain: localhost
-    root_url: "%(protocol)s://%(domain)s:3000"
+    domain: grafana.pocsplp.com
+    root_url: "%(protocol)s://%(domain)s"
   auth.anonymous:
     enabled: true
-    org_name: SPLP
+    org_id: 1
     org_role: Viewer
     hide_version: false
   security:
