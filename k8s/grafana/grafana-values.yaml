@@ -19,19 +19,17 @@ resources:
 
 grafana.ini:
   server:
-    domain: localhost
-    root_url: "%(protocol)s://%(domain)s:3000"
+    domain: grafana.pocsplp.com
+    root_url: "%(protocol)s://%(domain)s"
   auth.anonymous:
     enabled: true
-    org_name: SPLP
+    org_id: 1
     org_role: Viewer
     hide_version: false
   security:
     allow_embedding: true
     cookie_samesite: none
     cookie_secure: false
-  dashboards:
-    default_home_dashboard_path: /var/lib/grafana/dashboards/splp/overview.json
 
 datasources:
   datasources.yaml:
