@@ -1,0 +1,105 @@
+---
+title: SPLP 2026 — Arsitektur Sistem (PoC)
+---
+
+flowchart TB
+    subgraph USERS["👥 Pengguna"]
+        UA["🏛️ Admin\nKominfo / SPLP"]
+        UB["🏢 Operator Instansi\nDukcapil, BPJS, DJP, dst"]
+    end
+
+    subgraph INTERNET["🌐 Internet / Intranet"]
+        DNS["DNS\n*.pocsplp.com"]
+    end
+
+    subgraph K3D["☸️  k3d Cluster — poc-splp-dev"]
+        direction TB
+
+        NGINX["🔀 Nginx Ingress Controller\nport 80 / 443"]
+
+        subgraph NS_SPLP["namespace: splp"]
+            PORTAL["📱 splp-portal\nReact + Vite\nport 80"]
+            BACKEND["⚙️  splp-backend\nNode.js + Express\nport 3002"]
+            CH["🗄️  ClickHouse\nAnalytics DB\nport 8123"]
+        end
+
+        subgraph NS_WSO2["namespace: wso2"]
+            APIM["🔌 WSO2 API Manager 4.3\nPublisher / DevPortal / Gateway\nport 9443 / 8280"]
+            IS["🔐 WSO2 Identity Server\nOAuth2 / OIDC / SCIM2\nport 9444"]
+        end
+
+        subgraph NS_MON["namespace: monitoring"]
+            GRAFANA["📊 Grafana\nDashboard & Alerting\nport 3000"]
+        end
+
+        subgraph NS_KAFKA["namespace: kafka (opsional)"]
+            KAFKA["📨 Apache Kafka\nStrimzi Operator\nport 9092"]
+        end
+    end
+
+    subgraph MOCK["🧪 Mock API Endpoints (via backend)"]
+        M1["🏛️ /dukcapil/v2/*"]
+        M2["🏥 /bpjs-kes/v1/*"]
+        M3["💰 /djp/v3/*"]
+        M4["🚔 /polri/v1/*"]
+        M5["👷 /bpjs-tk/v1/*"]
+        M6["⚕️  /kemenkes/v2/*"]
+        M7["🤝 /kemensos/v1/*"]
+        M8["⚖️  /ditjen-imigrasi/v1/*"]
+        M9["🏠 /kemendagri/v1/*"]
+    end
+
+    %% User → Ingress
+    UA -->|"https://pocsplp.com"| DNS
+    UB -->|"https://pocsplp.com"| DNS
+    DNS --> NGINX
+
+    %% Ingress routing
+    NGINX -->|"pocsplp.com"| PORTAL
+    NGINX -->|"api-backend.pocsplp.com"| BACKEND
+    NGINX -->|"apim.pocsplp.com"| APIM
+    NGINX -->|"api.pocsplp.com"| APIM
+    NGINX -->|"id.pocsplp.com"| IS
+    NGINX -->|"grafana.pocsplp.com"| GRAFANA
+    NGINX -->|"clickhouse.pocsplp.com"| CH
+
+    %% Portal → Backend
+    PORTAL -->|"REST API"| BACKEND
+
+    %% Backend → WSO2
+    BACKEND -->|"OAuth2 token\nPublisher REST API"| APIM
+    BACKEND -->|"SCIM2 / OIDC\nvalidasi user"| IS
+
+    %% Backend → Data
+    BACKEND -->|"SQL / HTTP"| CH
+    BACKEND -->|"Produce / Consume"| KAFKA
+
+    %% APIM → Mock endpoints
+    APIM -->|"proxy request\n(api.pocsplp.com)"| BACKEND
+    BACKEND --- M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 & M9
+
+    %% Monitoring
+    GRAFANA -->|"query"| CH
+
+    %% Auth flow
+    IS -.->|"JWT token"| PORTAL
+    IS -.->|"JWT token"| APIM
+
+    %% Styling
+    classDef user      fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    classDef ingress   fill:#fef3c7,stroke:#d97706,color:#78350f
+    classDef app       fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    classDef wso2      fill:#ede9fe,stroke:#7c3aed,color:#3b0764
+    classDef data      fill:#fff7ed,stroke:#ea580c,color:#7c2d12
+    classDef monitor   fill:#fdf4ff,stroke:#a21caf,color:#4a044e
+    classDef kafka     fill:#ecfeff,stroke:#0891b2,color:#164e63
+    classDef mock      fill:#f8fafc,stroke:#94a3b8,color:#475569
+
+    class UA,UB user
+    class NGINX ingress
+    class PORTAL,BACKEND app
+    class APIM,IS wso2
+    class CH data
+    class GRAFANA monitor
+    class KAFKA kafka
+    class M1,M2,M3,M4,M5,M6,M7,M8,M9 mock

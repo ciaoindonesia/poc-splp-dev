@@ -74,12 +74,25 @@ echo "   ✅ Images diimport"
 
 # ── 6. Apply semua manifests ──────────────────────────────────────────────────
 echo "[6/8] Apply Kubernetes manifests..."
-# Urutan penting: storage → data → apps → ingress
-kubectl apply -f "$ROOT/k8s/wso2-apim/"     2>/dev/null || true
-kubectl apply -f "$ROOT/k8s/monitoring/"    2>/dev/null || true
-kubectl apply -f "$ROOT/k8s/splp-apps/"     2>/dev/null || true
-kubectl apply -f "$ROOT/k8s/ingress/"       2>/dev/null || true
+kubectl apply -f "$ROOT/k8s/wso2-apim/"   2>/dev/null || true
+kubectl apply -f "$ROOT/k8s/wso2-is/"     2>/dev/null || true
+kubectl apply -f "$ROOT/k8s/clickhouse/"  2>/dev/null || true
+kubectl apply -f "$ROOT/k8s/splp-apps/"   2>/dev/null || true
+kubectl apply -f "$ROOT/k8s/ingress/"     2>/dev/null || true
 echo "   ✅ Manifests applied"
+
+# ── Grafana via Helm ──────────────────────────────────────────────────────────
+if command -v helm &>/dev/null; then
+  echo "[6b] Deploy Grafana via Helm..."
+  helm repo add grafana https://grafana.github.io/helm-charts --force-update 2>/dev/null || true
+  helm upgrade --install grafana grafana/grafana \
+    -n monitoring --create-namespace \
+    -f "$ROOT/k8s/grafana/grafana-values.yaml" \
+    --wait --timeout 3m 2>&1 | tail -2 || echo "   ⚠  Grafana timeout, akan ready sebentar"
+  echo "   ✅ Grafana deployed"
+else
+  echo "   ⚠  helm tidak ditemukan, skip Grafana (install: https://helm.sh)"
+fi
 
 # ── 7. Tunggu pods ready ──────────────────────────────────────────────────────
 echo "[7/8] Tunggu pods splp-backend dan splp-portal..."
