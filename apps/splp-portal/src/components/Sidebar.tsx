@@ -75,7 +75,7 @@ export default function Sidebar({ open, currentPath }: Props) {
           </div>
           <div>
             <div className="font-bold text-slate-900 text-sm leading-tight">SPLP 2026</div>
-            <div className="text-[10px] text-slate-400 font-medium leading-tight">Kominfo Digital</div>
+            <div className="text-[10px] text-slate-400 font-medium leading-tight">Komdigi</div>
           </div>
         </div>
       </div>

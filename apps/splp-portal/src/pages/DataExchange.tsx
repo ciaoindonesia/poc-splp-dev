@@ -259,7 +259,7 @@ X-Transaction-Id: TXN-${Math.random().toString(36).substring(2,8).toUpperCase()}
 X-WSO2-Response-Time: ${response.latency}ms
 X-Gateway-Version: WSO2 API Manager 4.3.0
 X-OAuth2-Token: Bearer <redacted>
-X-Forwarded-For: splp-gateway.kominfo.go.id
+X-Forwarded-For: splp-gateway.komdigi.go.id
 Cache-Control: no-cache, no-store`}
                     </pre>
                   </div>
