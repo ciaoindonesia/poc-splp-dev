@@ -80,6 +80,14 @@ services:
       - NETBIRD_MGMT_API_ENDPOINT=https://netbird-mgmt.dev-indonesia.com
       - NETBIRD_MGMT_GRPC_API_ENDPOINT=https://netbird-mgmt.dev-indonesia.com
 
+  # ─── Demo API Server (NetBird VPN Demo) ───────────────────────────────────
+  demo-api:
+    build: ./demo-api
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - NETBIRD_IP=100.79.61.171
+
 volumes:
   netbird_mgmt:
   netbird_signal:
