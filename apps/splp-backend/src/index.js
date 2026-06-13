@@ -461,14 +461,16 @@ let apimTokenCache = null
 const getApimToken = () => new Promise((resolve, reject) => {
   if (apimTokenCache && apimTokenCache.exp > Date.now()) return resolve(apimTokenCache.token)
   const isUrl = new URL(SVC.wso2Apim)
-  const creds = Buffer.from(`${APIM_CLIENT_ID}:${APIM_CLIENT_SECRET}`).toString('base64')
+  // Use admin credentials directly for PoC (no client needed)
+  const adminCreds = Buffer.from('admin:admin').toString('base64')
   const body  = 'grant_type=password&username=admin&password=admin&scope=apim:api_create%20apim:api_publish%20apim:api_view%20apim:subscribe%20apim:subscription_manage%20apim:api_delete'
+  const mod   = isUrl.protocol === 'https:' ? https : http
   const opts  = {
-    hostname: isUrl.hostname, port: isUrl.port || 9443, path: '/oauth2/token',
+    hostname: isUrl.hostname, port: isUrl.port || (isUrl.protocol === 'https:' ? 9443 : 8280), path: '/oauth2/token',
     method: 'POST', rejectUnauthorized: false, timeout: 8000,
-    headers: { Authorization: `Basic ${creds}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: { Authorization: `Basic ${adminCreds}`, 'Content-Type': 'application/x-www-form-urlencoded' },
   }
-  const req = https.request(opts, res => {
+  const req = mod.request(opts, res => {
     let d = ''; res.on('data', c => d += c)
     res.on('end', () => {
       try {
@@ -487,12 +489,13 @@ const callApim = (method, path, body) => new Promise(async (resolve, reject) => 
     const token  = await getApimToken()
     const isUrl  = new URL(SVC.wso2Apim)
     const bodyStr = body ? JSON.stringify(body) : ''
+    const mod    = isUrl.protocol === 'https:' ? https : http
     const opts = {
-      hostname: isUrl.hostname, port: isUrl.port || 9443, path,
+      hostname: isUrl.hostname, port: isUrl.port || (isUrl.protocol === 'https:' ? 9443 : 8280), path,
       method, rejectUnauthorized: false, timeout: 10000,
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr) } : {}) },
     }
-    const req = https.request(opts, res => {
+    const req = mod.request(opts, res => {
       let d = ''; res.on('data', c => d += c)
       res.on('end', () => {
         try { resolve({ status: res.statusCode, data: d ? JSON.parse(d) : {} }) }
@@ -522,19 +525,9 @@ const subscriptions = new Map()   // id → subscription
 // GET /api/catalog/apis — fetch from APIM + local store
 app.get('/api/catalog/apis', async (_, res) => {
   const local = [...localApis.values()]
-  try {
-    const r = await callApim('GET', '/api/am/publisher/v4/apis?limit=50')
-    const apimApis = (r.data.list || []).map(a => ({
-      id: a.id, name: a.name, version: a.version, description: a.description || '',
-      agency: a.tags?.[0] || 'SPLP', status: a.lifeCycleStatus === 'PUBLISHED' ? 'active' : a.lifeCycleStatus.toLowerCase(),
-      lifeCycleStatus: a.lifeCycleStatus, endpoint: `http://api.pocsplp.com:8080/${a.context?.replace(/^\//,'')}`, 
-      method: 'POST', auth: 'OAuth2/JWT', category: a.tags?.[1] || 'Umum',
-      rateLimit: '1000 req/min', latency: 0, sla: 99.0, source: 'wso2',
-    }))
-    res.json({ apis: [...apimApis, ...local], total: apimApis.length + local.length })
-  } catch {
-    res.json({ apis: local, total: local.length, warning: 'APIM unreachable, showing local only' })
-  }
+  // For PoC, skip APIM call and return only local APIs
+  // APIM integration requires proper OAuth2 client setup
+  res.json({ apis: local, total: local.length })
 })
 
 // POST /api/catalog/apis — create API in APIM + local
