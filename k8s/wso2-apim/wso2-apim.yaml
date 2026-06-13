@@ -51,7 +51,14 @@ spec:
             initialDelaySeconds: 120
             periodSeconds: 30
             failureThreshold: 5
-          volumeMounts: []
+          volumeMounts:
+            - name: apim-config
+              mountPath: /home/wso2carbon/wso2am-4.7.0/repository/conf/deployment.toml
+              subPath: deployment.toml
+      volumes:
+        - name: apim-config
+          configMap:
+            name: wso2-apim-config
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -61,7 +68,7 @@ metadata:
 data:
   deployment.toml: |
     [server]
-    hostname = "localhost"
+    hostname = "apim.SPLP_DOMAIN"
     node_ip = "$env{NODE_IP}"
     server_role = "default"
     offset = 0
@@ -104,11 +111,11 @@ data:
     display_in_api_console = true
     description = "SPLP Gateway Environment"
     show_as_token_endpoint_url = true
-    service_url = "https://localhost:9443/services/"
-    ws_endpoint = "ws://localhost:9099"
-    wss_endpoint = "wss://localhost:8099"
-    http_endpoint = "http://localhost:8280"
-    https_endpoint = "https://localhost:8243"
+    service_url = "https://apim.SPLP_DOMAIN/services/"
+    ws_endpoint = "ws://api.SPLP_DOMAIN:9099"
+    wss_endpoint = "wss://api.SPLP_DOMAIN:8099"
+    http_endpoint = "http://api.SPLP_DOMAIN"
+    https_endpoint = "https://api.SPLP_DOMAIN"
 
     [apim.cors]
     allow_origins = "*"

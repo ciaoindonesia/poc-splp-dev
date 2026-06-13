@@ -35,6 +35,11 @@ OUT="$ROOT/k8s/ingress/ingress-all.yaml"
 sed "s/SPLP_DOMAIN/$NEW_DOMAIN/g" "$TMPL" > "$OUT"
 echo "✅ k8s/ingress/ingress-all.yaml dihasilkan"
 
+# ── Generate wso2-apim.yaml (replace SPLP_DOMAIN placeholder) ─────────────────
+sed -i "s/apim\.SPLP_DOMAIN/apim.$NEW_DOMAIN/g; s/api\.SPLP_DOMAIN/api.$NEW_DOMAIN/g" \
+  "$ROOT/k8s/wso2-apim/wso2-apim.yaml"
+echo "✅ k8s/wso2-apim/wso2-apim.yaml hostname diperbarui → apim.$NEW_DOMAIN"
+
 # ── Apply ke cluster (jika kubectl tersedia) ──────────────────────────────────
 if kubectl cluster-info &>/dev/null 2>&1; then
   kubectl apply -f "$OUT"
