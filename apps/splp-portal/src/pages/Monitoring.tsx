@@ -14,11 +14,18 @@ function getGrafanaUrl(): string {
 
 const GRAFANA_URL = getGrafanaUrl()
 
+const LOKI_EXPLORE = `${GRAFANA_URL}/explore?orgId=1&left=${encodeURIComponent(JSON.stringify({
+  datasource: 'loki-splp',
+  queries: [{ refId: 'A', expr: '{namespace=~"splp|wso2|messaging"}', queryType: 'range' }],
+  range: { from: 'now-1h', to: 'now' },
+}))}`
+
 const DASHBOARD_PANELS = [
-  { title: 'Traffic Overview',       uid: 'splp-traffic',   src: `${GRAFANA_URL}/d/splp-traffic/splp-traffic-overview?orgId=1&refresh=5s&theme=light&kiosk` },
-  { title: 'Kafka Metrics',          uid: 'kafka-metrics',  src: `${GRAFANA_URL}/d/kafka-metrics/kafka-metrics?orgId=1&refresh=5s&theme=light&kiosk` },
-  { title: 'API Latency Heatmap',    uid: 'api-latency',    src: `${GRAFANA_URL}/d/api-latency/api-latency?orgId=1&refresh=5s&theme=light&kiosk` },
-  { title: 'System Resources',       uid: 'k8s-resources',  src: `${GRAFANA_URL}/d/k8s-resources/system-resources?orgId=1&refresh=10s&theme=light&kiosk` },
+  { title: 'Traffic Overview',            uid: 'splp-traffic',   src: `${GRAFANA_URL}/d/splp-traffic/splp-traffic-overview?orgId=1&refresh=5s&theme=light&kiosk` },
+  { title: 'Kafka Metrics',               uid: 'kafka-metrics',  src: `${GRAFANA_URL}/d/kafka-metrics/kafka-metrics?orgId=1&refresh=5s&theme=light&kiosk` },
+  { title: 'API Latency Heatmap',         uid: 'api-latency',    src: `${GRAFANA_URL}/d/api-latency/api-latency?orgId=1&refresh=5s&theme=light&kiosk` },
+  { title: 'Infrastructure (Prometheus)', uid: 'rYdddlPWk',      src: `${GRAFANA_URL}/d/rYdddlPWk/node-exporter-full?orgId=1&refresh=10s&theme=light&kiosk` },
+  { title: 'Application Logs (Loki)',     uid: 'loki-explore',   src: LOKI_EXPLORE },
 ]
 
 const ALERTS = [
@@ -30,15 +37,16 @@ const ALERTS = [
 ]
 
 export default function Monitoring() {
-  const [activeView, setActiveView] = useState<'overview' | 'kafka' | 'latency' | 'system'>('overview')
+  const [activeView, setActiveView] = useState<'overview' | 'kafka' | 'latency' | 'infra' | 'logs'>('overview')
   const [iframeKey, setIframeKey] = useState(0)
   const [iframeLoaded, setIframeLoaded] = useState(false)
 
   const currentPanel = DASHBOARD_PANELS.find(p => ({
     overview: 'splp-traffic',
-    kafka: 'kafka-metrics',
-    latency: 'api-latency',
-    system: 'k8s-resources',
+    kafka:    'kafka-metrics',
+    latency:  'api-latency',
+    infra:    'rYdddlPWk',
+    logs:     'loki-explore',
   }[activeView] === p.uid)) ?? DASHBOARD_PANELS[0]
 
   return (
@@ -99,18 +107,20 @@ export default function Monitoring() {
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 px-1">Dashboard Panels</p>
             <div className="space-y-1">
               {([
-                { key: 'overview', label: 'Traffic Overview', icon: '📊' },
-                { key: 'kafka',    label: 'Kafka Metrics',    icon: '📨' },
-                { key: 'latency',  label: 'API Latency',      icon: '⚡' },
-                { key: 'system',   label: 'System Resources', icon: '🖥️' },
-              ] as const).map(v => (
+                { key: 'overview', label: 'Traffic Overview',  icon: '📊', badge: '' },
+                { key: 'kafka',    label: 'Kafka Metrics',     icon: '📨', badge: '' },
+                { key: 'latency',  label: 'API Latency',       icon: '⚡', badge: '' },
+                { key: 'infra',    label: 'Infrastructure',    icon: '📈', badge: 'Prometheus' },
+                { key: 'logs',     label: 'Application Logs',  icon: '�', badge: 'Loki' },
+              ] as { key: 'overview'|'kafka'|'latency'|'infra'|'logs'; label: string; icon: string; badge: string }[]).map(v => (
                 <button
                   key={v.key}
                   onClick={() => setActiveView(v.key)}
                   className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold text-left transition-all ${activeView === v.key ? 'bg-splp-50 text-splp-700 border border-splp-100' : 'text-slate-600 hover:bg-slate-50'}`}
                 >
                   <span>{v.icon}</span>
-                  {v.label}
+                  <span className="flex-1">{v.label}</span>
+                  {v.badge && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-semibold">{v.badge}</span>}
                 </button>
               ))}
             </div>
@@ -189,14 +199,18 @@ export default function Monitoring() {
         <h3 className="section-title text-base mb-4">Status Semua Komponen</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { name: 'WSO2 API Manager 4.3', ns: 'wso2', pods: '1/1', cpu: '45%', mem: '2.1GB', status: 'Running' },
+            { name: 'WSO2 API Manager 4.7', ns: 'wso2', pods: '1/1', cpu: '45%', mem: '2.1GB', status: 'Running' },
             { name: 'WSO2 Identity Server', ns: 'wso2', pods: '1/1', cpu: '28%', mem: '1.4GB', status: 'Running' },
             { name: 'Kafka (KRaft)', ns: 'messaging', pods: '1/1', cpu: '12%', mem: '512MB', status: 'Running' },
             { name: 'ClickHouse 24.3', ns: 'splp', pods: '1/1', cpu: '8%', mem: '980MB', status: 'Running' },
-            { name: 'Grafana 10.x', ns: 'monitoring', pods: '1/1', cpu: '4%', mem: '256MB', status: 'Running' },
+            { name: 'Grafana', ns: 'monitoring', pods: '1/1', cpu: '4%', mem: '256MB', status: 'Running' },
+            { name: 'Prometheus', ns: 'monitoring', pods: '1/1', cpu: '3%', mem: '299MB', status: 'Running' },
+            { name: 'Loki', ns: 'monitoring', pods: '1/1', cpu: '2%', mem: '57MB', status: 'Running' },
+            { name: 'Promtail', ns: 'monitoring', pods: '3/3', cpu: '2%', mem: '30MB', status: 'Running' },
             { name: 'SPLP Portal', ns: 'splp', pods: '1/1', cpu: '5%', mem: '128MB', status: 'Running' },
             { name: 'SPLP Backend', ns: 'splp', pods: '1/1', cpu: '6%', mem: '192MB', status: 'Running' },
-            { name: 'k3d LoadBalancer', ns: 'system', pods: '1/1', cpu: '1%', mem: '64MB', status: 'Running' },
+            { name: 'Nginx Ingress', ns: 'kube-system', pods: '1/1', cpu: '2%', mem: '128MB', status: 'Running' },
+            { name: 'cert-manager', ns: 'cert-manager', pods: '1/1', cpu: '1%', mem: '64MB', status: 'Running' },
           ].map(s => (
             <div key={s.name} className="p-3 rounded-xl border border-slate-100 hover:border-splp-200 transition-colors">
               <div className="flex items-start justify-between">
