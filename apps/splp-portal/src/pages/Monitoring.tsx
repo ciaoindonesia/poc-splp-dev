@@ -14,18 +14,12 @@ function getGrafanaUrl(): string {
 
 const GRAFANA_URL = getGrafanaUrl()
 
-const LOKI_EXPLORE = `${GRAFANA_URL}/explore?orgId=1&left=${encodeURIComponent(JSON.stringify({
-  datasource: 'loki-splp',
-  queries: [{ refId: 'A', expr: '{namespace=~"splp|wso2|messaging"}', queryType: 'range' }],
-  range: { from: 'now-1h', to: 'now' },
-}))}`
-
 const DASHBOARD_PANELS = [
-  { title: 'Traffic Overview',            uid: 'splp-traffic',   src: `${GRAFANA_URL}/d/splp-traffic/splp-traffic-overview?orgId=1&refresh=5s&theme=light&kiosk` },
-  { title: 'Kafka Metrics',               uid: 'kafka-metrics',  src: `${GRAFANA_URL}/d/kafka-metrics/kafka-metrics?orgId=1&refresh=5s&theme=light&kiosk` },
-  { title: 'API Latency Heatmap',         uid: 'api-latency',    src: `${GRAFANA_URL}/d/api-latency/api-latency?orgId=1&refresh=5s&theme=light&kiosk` },
-  { title: 'Infrastructure (Prometheus)', uid: 'rYdddlPWk',      src: `${GRAFANA_URL}/d/rYdddlPWk/node-exporter-full?orgId=1&refresh=10s&theme=light&kiosk` },
-  { title: 'Application Logs (Loki)',     uid: 'loki-explore',   src: LOKI_EXPLORE },
+  { title: 'Traffic Overview',            uid: 'splp-traffic',              src: `${GRAFANA_URL}/d/splp-traffic/splp-traffic-overview?orgId=1&refresh=5s&theme=light&kiosk` },
+  { title: 'Kafka Metrics',               uid: 'kafka-metrics',             src: `${GRAFANA_URL}/d/kafka-metrics/kafka-metrics?orgId=1&refresh=5s&theme=light&kiosk` },
+  { title: 'API Latency Heatmap',         uid: 'api-latency',               src: `${GRAFANA_URL}/d/api-latency/api-latency?orgId=1&refresh=5s&theme=light&kiosk` },
+  { title: 'Infrastructure (Prometheus)', uid: 'rYdddlPWk',                 src: `${GRAFANA_URL}/d/rYdddlPWk/node-exporter-full?orgId=1&refresh=10s&theme=light&kiosk` },
+  { title: 'Application Logs (Loki)',     uid: 'sadlil-loki-apps-dashboard', src: `${GRAFANA_URL}/d/sadlil-loki-apps-dashboard/logs-app?orgId=1&from=now-1h&to=now&theme=light&kiosk` },
 ]
 
 const ALERTS = [
@@ -46,7 +40,7 @@ export default function Monitoring() {
     kafka:    'kafka-metrics',
     latency:  'api-latency',
     infra:    'rYdddlPWk',
-    logs:     'loki-explore',
+    logs:     'sadlil-loki-apps-dashboard',
   }[activeView] === p.uid)) ?? DASHBOARD_PANELS[0]
 
   return (
