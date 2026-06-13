@@ -1,11 +1,38 @@
-## NetBird Dashboard — Ingress via k3d (TLS dari cert-manager)
-## NetBird berjalan di Docker host port 8088.
-## k3d nginx ingress proxy ke host melalui Endpoint manual.
+## NetBird — Kubernetes Ingress Manifest (via k3d/k3s + nginx + cert-manager)
+##
+## Arsitektur:
+##   Docker host menjalankan NetBird containers (management, signal, dashboard, coturn)
+##   k3d nginx ingress mem-proxy request dari luar ke host via Endpoint manual
+##
+## Port mapping Docker host:
+##   8088 → dashboard (HTTP)
+##   8091 → management (HTTP/2 + gRPC, container port 80)
+##   10000 → signal (HTTP)
+##   3478 → coturn STUN/TURN (UDP, network_mode: host — tidak perlu ingress)
 ##
 ## Cara apply:
 ##   HOST_GW=$(ip route | awk '/docker0/{print $9; exit}')
-##   sed "s/HOST_GATEWAY_IP/$HOST_GW/g" k8s/netbird/netbird-ingress.yaml | kubectl apply -f -
+##   sed "s/HOST_GATEWAY_IP/$HOST_GW/g" k8s/netbird/netbird-ingress.yaml \
+##     | sed "s/SPLP_DOMAIN/dev-indonesia.com/g" \
+##     | kubectl apply -f -
+##
 ## Atau jalankan: bash scripts/08-setup-netbird-peer.sh --apply-ingress
+##
+## CATATAN PENTING:
+##   - Management gRPC (netbird-mgmt-grpc.SPLP_DOMAIN) → backend port 8091
+##     dengan backend-protocol: GRPC agar nginx forward sebagai HTTP/2
+##   - Management HTTP REST (netbird-mgmt.SPLP_DOMAIN) → backend port 8091
+##     dengan backend-protocol: GRPC (sama, karena port 80 container
+##     melayani gRPC + HTTP REST di protokol yang sama)
+##   - Port 33073 adalah "gRPC backward compatibility" untuk client lama (<0.28)
+##     JANGAN dipakai sebagai management URL untuk client versi baru (0.29+)
+##   - Signal server TIDAK perlu TLS di ingress karena NetBird client
+##     connect ke signal via plain HTTP (URI di management.json pakai "http")
+
+## ============================================================
+## 1. NETBIRD DASHBOARD
+## ============================================================
+
 ---
 ## Endpoint manual → host Docker gateway port 8088
 apiVersion: v1
@@ -32,7 +59,7 @@ spec:
       targetPort: 8088
       protocol: TCP
 ---
-## Ingress dengan TLS cert-manager
+## Ingress dashboard dengan TLS cert-manager
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -43,6 +70,7 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
 spec:
   ingressClassName: nginx
   tls:
@@ -60,10 +88,11 @@ spec:
                 name: netbird-dashboard
                 port:
                   number: 80
----
-## NetBird Signal Server — Ingress via k3d
-## Signal berjalan di Docker host port 10000.
-## k3d nginx ingress proxy ke host melalui Endpoint manual.
+
+## ============================================================
+## 2. NETBIRD SIGNAL SERVER
+## ============================================================
+
 ---
 ## Endpoint manual → host Docker gateway port 10000
 apiVersion: v1
@@ -90,7 +119,9 @@ spec:
       targetPort: 10000
       protocol: TCP
 ---
-## Ingress untuk signal (tanpa TLS untuk HTTP signal)
+## Ingress signal — plain HTTP (NetBird client connect ke signal via HTTP,
+## bukan HTTPS; URI di management.json: "Proto": "http")
+## ssl-redirect: false agar tidak redirect ke HTTPS
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -98,7 +129,9 @@ metadata:
   namespace: monitoring
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
 spec:
   ingressClassName: nginx
   rules:
@@ -112,12 +145,15 @@ spec:
                 name: netbird-signal
                 port:
                   number: 10000
----
-## NetBird Management HTTP API — Ingress via k3d
-## Management berjalan di Docker host port 8091.
-## k3d nginx ingress proxy ke host melalui Endpoint manual.
+
+## ============================================================
+## 3. NETBIRD MANAGEMENT — Service & Endpoint (shared)
+##    Dipakai oleh kedua ingress di bawah (HTTP REST & gRPC)
+## ============================================================
+
 ---
 ## Endpoint manual → host Docker gateway port 8091
+## Port 8091 = container port 80 = HTTP/2 multiplexed (gRPC + HTTP REST)
 apiVersion: v1
 kind: Endpoints
 metadata:
@@ -141,3 +177,79 @@ spec:
     - port: 8091
       targetPort: 8091
       protocol: TCP
+
+## ============================================================
+## 4. NETBIRD MANAGEMENT — Ingress gRPC
+##    Dipakai oleh NetBird client (netbird up --management-url)
+##    backend-protocol: GRPC → nginx forward sebagai HTTP/2 (h2c)
+## ============================================================
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbird-management-grpc
+  namespace: monitoring
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - netbird-mgmt-grpc.SPLP_DOMAIN
+      secretName: tls-netbird-mgmt-grpc-SPLP_DOMAIN
+  rules:
+    - host: netbird-mgmt-grpc.SPLP_DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: netbird-management-http
+                port:
+                  number: 8091
+
+## ============================================================
+## 5. NETBIRD MANAGEMENT — Ingress HTTP REST API
+##    Dipakai oleh dashboard web (NETBIRD_MGMT_API_ENDPOINT)
+##    backend-protocol: GRPC tetap diperlukan karena port 8091
+##    melayani HTTP/2 (nginx harus connect sebagai h2c)
+## ============================================================
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbird-management
+  namespace: monitoring
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - netbird-mgmt.SPLP_DOMAIN
+      secretName: tls-netbird-mgmt-SPLP_DOMAIN
+  rules:
+    - host: netbird-mgmt.SPLP_DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: netbird-management-http
+                port:
+                  number: 8091

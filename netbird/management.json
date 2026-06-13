@@ -23,7 +23,7 @@
     "Relay": null,
     "Signal": {
         "Proto": "http",
-        "URI": "172.105.122.119:10000",
+        "URI": "netbird-signal.dev-indonesia.com:10000",
         "Username": "",
         "Password": ""
     },

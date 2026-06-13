@@ -46,7 +46,7 @@ services:
 
   # ─── NetBird Management Server ───────────────────────────────────────────
   management:
-    image: netbirdio/management:0.28.9
+    image: netbirdio/management:latest
     restart: unless-stopped
     depends_on:
       - signal

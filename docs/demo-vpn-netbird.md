@@ -78,13 +78,49 @@ docker compose -f netbird/docker-compose.yml ps
 **Output yang diharapkan:**
 ```
 NAME         STATUS    PORTS
-coturn       running   3478/udp
+coturn       running   (network_mode: host — port 3478 UDP langsung di host)
 signal       running   0.0.0.0:10000->10000/tcp
-management   running   0.0.0.0:33073->33073/tcp
+management   running   0.0.0.0:33073->33073/tcp, 0.0.0.0:8091->80/tcp
 dashboard    running   0.0.0.0:8088->80/tcp
 ```
 
-### B. Akses Dashboard NetBird
+### B2. Apply Kubernetes Ingress untuk NetBird
+
+Ingress diperlukan agar NetBird dapat diakses via domain dengan TLS.
+Jalankan **sekali** setelah containers up:
+
+```bash
+# Di server: 172.105.122.119
+cd ~/poc-splp-dev
+
+# Detect IP gateway Docker host (dipakai sebagai backend Endpoint k8s)
+HOST_GW=$(ip route | awk '/docker0/{print $9; exit}')
+
+# Apply semua ingress NetBird (dashboard, signal, management HTTP, management gRPC)
+sed "s/HOST_GATEWAY_IP/$HOST_GW/g" k8s/netbird/netbird-ingress.yaml \
+  | sed "s/SPLP_DOMAIN/dev-indonesia.com/g" \
+  | kubectl apply -f -
+```
+
+**Output yang diharapkan:**
+```
+endpoints/netbird-dashboard created (or configured)
+service/netbird-dashboard created (or configured)
+ingress.networking.k8s.io/netbird-dashboard created (or configured)
+endpoints/netbird-signal created (or configured)
+service/netbird-signal created (or configured)
+ingress.networking.k8s.io/netbird-signal created (or configured)
+endpoints/netbird-management-http created (or configured)
+service/netbird-management-http created (or configured)
+ingress.networking.k8s.io/netbird-management-grpc created (or configured)
+ingress.networking.k8s.io/netbird-management created (or configured)
+```
+
+> **Catatan:** Management client (netbird up) menggunakan endpoint gRPC di
+> `https://netbird-mgmt-grpc.dev-indonesia.com` — bukan port 33073.
+> Port 33073 hanya untuk backward compatibility dengan client versi lama (<0.29).
+
+### B3. Akses Dashboard NetBird
 
 Buka browser: **https://netbird.dev-indonesia.com** (atau `http://172.105.122.119:8088`)
 
@@ -138,7 +174,7 @@ Action  : Allow
 curl -fsSL https://pkgs.netbird.io/install.sh | sh
 
 netbird up \
-  --management-url https://netbird.dev-indonesia.com:33073 \
+  --management-url https://netbird-mgmt-grpc.dev-indonesia.com \
   --setup-key <splp-server-key> \
   --hostname "splp-server"
 
@@ -149,12 +185,12 @@ netbird status
 **Output:**
 ```
 OS: linux/amd64
-Daemon version: 0.x.x
-CLI version: 0.x.x
-Management: Connected to https://netbird.dev-indonesia.com:33073
+Daemon version: 0.72.x
+CLI version: 0.72.x
+Management: Connected to https://netbird-mgmt-grpc.dev-indonesia.com:443
 Signal: Connected
-Relays: Connected
-NetBird IP: 100.64.0.1/16  ← catat IP ini
+Relays: 2/2 Available
+NetBird IP: 100.79.x.x/16  ← catat IP ini
 Interface type: Kernel WireGuard
 ```
 
@@ -186,7 +222,7 @@ curl -fsSL https://pkgs.netbird.io/install.sh | sh
 
 # Connect sebagai "instansi-dukcapil"
 netbird up \
-  --management-url https://netbird.dev-indonesia.com:33073 \
+  --management-url https://netbird-mgmt-grpc.dev-indonesia.com \
   --setup-key <instansi-dukcapil-key> \
   --hostname "dukcapil-server"
 
@@ -228,7 +264,9 @@ curl -v --connect-timeout 5 \
 
 ```bash
 # Connect VPN kembali
-netbird up --setup-key <instansi-dukcapil-key>
+netbird up \
+  --management-url https://netbird-mgmt-grpc.dev-indonesia.com \
+  --setup-key <instansi-dukcapil-key>
 
 # Akses API via NetBird virtual IP (BUKAN public IP)
 SPLP_VPN_IP="100.64.0.1"  # IP NetBird server
@@ -329,7 +367,7 @@ curl "http://${SPLP_VPN_IP}:30802/health"
 ```bash
 # Laptop/server kedua — simulasi BPJS Kesehatan
 netbird up \
-  --management-url https://netbird.dev-indonesia.com:33073 \
+  --management-url https://netbird-mgmt-grpc.dev-indonesia.com \
   --setup-key <instansi-bpjs-key> \
   --hostname "bpjs-server"
 ```
@@ -393,16 +431,27 @@ Konfigurasi ada di `netbird/management.json` dan `netbird/docker-compose.yml`.
 
 ```bash
 # Cek status NetBird
-netbird status
+netbird status --detail
+
+# Cek apakah management gRPC endpoint reachable
+curl -v --http2-prior-knowledge \
+  -H "Content-Type: application/grpc" \
+  https://netbird-mgmt-grpc.dev-indonesia.com/management.ManagementService/GetServerKey
+# Response "405 invalid gRPC request method" = endpoint OK
 
 # Cek apakah signal server reachable
-nc -vz netbird.dev-indonesia.com 10000
+nc -vz netbird-signal.dev-indonesia.com 10000
 
-# Cek firewall — buka port yang diperlukan
-# UDP 51820 (WireGuard)
-# TCP 10000 (signal)
-# TCP/UDP 33073 (management)
-# UDP 3478 (STUN/TURN)
+# Port yang harus terbuka di firewall server:
+# TCP 443        (nginx ingress — management gRPC & dashboard)
+# TCP 80         (nginx ingress — redirect ke 443)
+# TCP 10000      (signal server — direct, tidak via ingress)
+# UDP 51820      (WireGuard tunnel antar peer)
+# UDP 3478       (STUN/TURN coturn)
+# TCP/UDP 3478   (STUN/TURN coturn)
+#
+# CATATAN: Port 33073 adalah "gRPC backward compatibility" untuk client lama.
+# Client versi 0.29+ harus menggunakan management-url via port 443 (ingress gRPC).
 ```
 
 ### Tunnel terbentuk tapi traffic tidak mengalir
