@@ -45,7 +45,7 @@ else
 fi
 
 # ── Update /etc/hosts (lokal, jika belum ada) ─────────────────────────────────
-HOSTS_ENTRIES="127.0.0.1 ${NEW_DOMAIN} api.${NEW_DOMAIN} api-backend.${NEW_DOMAIN} apim.${NEW_DOMAIN} id.${NEW_DOMAIN} grafana.${NEW_DOMAIN} clickhouse.${NEW_DOMAIN}"
+HOSTS_ENTRIES="127.0.0.1 ${NEW_DOMAIN} api.${NEW_DOMAIN} api-backend.${NEW_DOMAIN} apim.${NEW_DOMAIN} is.${NEW_DOMAIN} grafana.${NEW_DOMAIN} clickhouse.${NEW_DOMAIN}"
 if ! grep -q "$NEW_DOMAIN" /etc/hosts 2>/dev/null; then
   echo ""
   echo "📋 Tambahkan baris berikut ke /etc/hosts:"
@@ -66,7 +66,7 @@ echo "   Portal  : http://$NEW_DOMAIN"
 echo "   Backend : http://api-backend.$NEW_DOMAIN"
 echo "   API GW  : http://api.$NEW_DOMAIN"
 echo "   APIM    : http://apim.$NEW_DOMAIN/publisher/"
-echo "   IS      : http://id.$NEW_DOMAIN"
+echo "   IS      : http://is.$NEW_DOMAIN"
 echo "   Grafana : http://grafana.$NEW_DOMAIN"
 echo "================================================================="
 
@@ -79,7 +79,7 @@ cat >> "$CONF" << 'EOF'
 #   Backend API: api-backend.BASE_DOMAIN
 #   API Gateway: api.BASE_DOMAIN
 #   APIM UI    : apim.BASE_DOMAIN
-#   Identity   : id.BASE_DOMAIN
+#   Identity   : is.BASE_DOMAIN
 #   Grafana    : grafana.BASE_DOMAIN
 #   ClickHouse : clickhouse.BASE_DOMAIN
 EOF

@@ -1,6 +1,6 @@
 ## SPLP Ingress Resources — SPLP_DOMAIN
 ## Requires nginx-ingress-controller
-## /etc/hosts: 127.0.0.1 SPLP_DOMAIN api.SPLP_DOMAIN apim.SPLP_DOMAIN id.SPLP_DOMAIN grafana.SPLP_DOMAIN clickhouse.SPLP_DOMAIN
+## /etc/hosts: 127.0.0.1 SPLP_DOMAIN api.SPLP_DOMAIN apim.SPLP_DOMAIN is.SPLP_DOMAIN grafana.SPLP_DOMAIN clickhouse.SPLP_DOMAIN
 
 ---
 ## SPLP Portal
@@ -106,7 +106,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: id.SPLP_DOMAIN
+    - host: is.SPLP_DOMAIN
       http:
         paths:
           - path: /
