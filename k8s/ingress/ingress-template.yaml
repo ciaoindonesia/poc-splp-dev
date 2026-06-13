@@ -19,9 +19,20 @@ spec:
   tls:
     - hosts:
         - SPLP_DOMAIN
+        - portal.SPLP_DOMAIN
       secretName: tls-portal-SPLP_DOMAIN
   rules:
     - host: SPLP_DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: splp-portal
+                port:
+                  number: 80
+    - host: portal.SPLP_DOMAIN
       http:
         paths:
           - path: /
