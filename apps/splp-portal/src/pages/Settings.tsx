@@ -1,27 +1,22 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Save, RefreshCw, CheckCircle2, Shield, Database, Bell, Key, Loader2, WifiOff } from 'lucide-react'
+import { deriveBackendUrl } from '../lib/utils'
 
-const BACKEND = (() => {
-  if (import.meta.env.VITE_BACKEND_URL) return import.meta.env.VITE_BACKEND_URL
-  if (typeof window === 'undefined') return 'http://localhost:3002'
-  const h = window.location.hostname
-  const p = window.location.port ? `:${window.location.port}` : ''
-  return (h === 'localhost' || h === '127.0.0.1') ? 'http://localhost:3002' : `http://api-backend.${h}${p}`
-})()
+const BACKEND = deriveBackendUrl()
 
 function deriveUrls() {
   if (typeof window === 'undefined') return {}
   const h = window.location.hostname
-  const p = window.location.port ? `:${window.location.port}` : ''
   const isLocal = h === 'localhost' || h === '127.0.0.1'
-  const base = isLocal ? 'localhost' : h
+  const parts = h.split('.')
+  const base = isLocal ? 'localhost' : (parts.length > 2 ? parts.slice(1).join('.') : h)
   const pfx  = isLocal ? 'http' : window.location.protocol.replace(':', '')
   return {
-    wso2ApimUrl:   `${pfx}://apim.${base}${p}/carbon`,
-    wso2IsUrl:     `${pfx}://id.${base}${p}/console`,
-    grafanaUrl:    `${pfx}://grafana.${base}${p}`,
-    clickhouseUrl: `${pfx}://clickhouse.${base}${p}`,
-    backendUrl:    `${pfx}://${base}${p}/api`,
+    wso2ApimUrl:   `${pfx}://apim.${base}/carbon`,
+    wso2IsUrl:     `${pfx}://is.${base}/console`,
+    grafanaUrl:    `${pfx}://grafana.${base}`,
+    clickhouseUrl: `${pfx}://clickhouse.${base}`,
+    backendUrl:    deriveBackendUrl(),
   }
 }
 
