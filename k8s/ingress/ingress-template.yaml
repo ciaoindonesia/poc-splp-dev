@@ -1,5 +1,5 @@
 ## SPLP Ingress Resources — SPLP_DOMAIN
-## Requires nginx-ingress-controller
+## Requires nginx-ingress-controller + cert-manager (for TLS)
 ## /etc/hosts: 127.0.0.1 SPLP_DOMAIN api.SPLP_DOMAIN apim.SPLP_DOMAIN is.SPLP_DOMAIN grafana.SPLP_DOMAIN clickhouse.SPLP_DOMAIN
 
 ---
@@ -10,11 +10,16 @@ metadata:
   name: splp-portal
   namespace: splp
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - SPLP_DOMAIN
+      secretName: tls-portal-SPLP_DOMAIN
   rules:
     - host: SPLP_DOMAIN
       http:
@@ -34,12 +39,17 @@ metadata:
   name: splp-backend
   namespace: splp
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "*"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - api-backend.SPLP_DOMAIN
+      secretName: tls-api-backend-SPLP_DOMAIN
   rules:
     - host: api-backend.SPLP_DOMAIN
       http:
@@ -59,7 +69,8 @@ metadata:
   name: wso2-apim
   namespace: wso2
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     nginx.ingress.kubernetes.io/proxy-ssl-verify: "off"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
@@ -68,6 +79,11 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - apim.SPLP_DOMAIN
+        - api.SPLP_DOMAIN
+      secretName: tls-apim-SPLP_DOMAIN
   rules:
     - host: apim.SPLP_DOMAIN
       http:
@@ -97,7 +113,8 @@ metadata:
   name: wso2-is
   namespace: wso2
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     nginx.ingress.kubernetes.io/proxy-ssl-verify: "off"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
@@ -105,6 +122,10 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - is.SPLP_DOMAIN
+      secretName: tls-is-SPLP_DOMAIN
   rules:
     - host: is.SPLP_DOMAIN
       http:
@@ -124,10 +145,15 @@ metadata:
   name: grafana
   namespace: monitoring
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - grafana.SPLP_DOMAIN
+      secretName: tls-grafana-SPLP_DOMAIN
   rules:
     - host: grafana.SPLP_DOMAIN
       http:
@@ -147,10 +173,15 @@ metadata:
   name: clickhouse
   namespace: splp
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - clickhouse.SPLP_DOMAIN
+      secretName: tls-clickhouse-SPLP_DOMAIN
   rules:
     - host: clickhouse.SPLP_DOMAIN
       http:
