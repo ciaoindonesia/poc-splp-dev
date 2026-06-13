@@ -93,7 +93,6 @@ spec:
   tls:
     - hosts:
         - apim.SPLP_DOMAIN
-        - api.SPLP_DOMAIN
       secretName: tls-apim-SPLP_DOMAIN
   rules:
     - host: apim.SPLP_DOMAIN
@@ -184,15 +183,10 @@ metadata:
   name: clickhouse
   namespace: splp
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
 spec:
   ingressClassName: nginx
-  tls:
-    - hosts:
-        - clickhouse.SPLP_DOMAIN
-      secretName: tls-clickhouse-SPLP_DOMAIN
   rules:
     - host: clickhouse.SPLP_DOMAIN
       http:
