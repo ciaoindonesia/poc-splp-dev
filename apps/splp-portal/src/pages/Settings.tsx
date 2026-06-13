@@ -16,6 +16,8 @@ function deriveUrls() {
     wso2IsUrl:     `${pfx}://is.${base}/console`,
     grafanaUrl:    `${pfx}://grafana.${base}`,
     clickhouseUrl: `${pfx}://clickhouse.${base}`,
+    prometheusUrl: 'http://prometheus-server.monitoring.svc.cluster.local:80',
+    lokiUrl:       'http://loki.monitoring.svc.cluster.local:3100',
     backendUrl:    deriveBackendUrl(),
   }
 }
@@ -47,13 +49,16 @@ export default function Settings() {
 
   useEffect(() => { runCheck() }, [])
 
+  const urls = deriveUrls()
   const [conn, setConn] = useState(() => ({
-    wso2ApimUrl:   deriveUrls().wso2ApimUrl   ?? 'https://wso2-apim.wso2.svc:9443',
-    wso2IsUrl:     deriveUrls().wso2IsUrl     ?? 'https://wso2-is.wso2.svc:9444',
+    wso2ApimUrl:   urls.wso2ApimUrl   ?? 'https://wso2-apim.wso2.svc:9443',
+    wso2IsUrl:     urls.wso2IsUrl     ?? 'https://wso2-is.wso2.svc:9444',
     kafkaBroker:   'splp-kafka-kafka-bootstrap.messaging.svc:9092',
-    clickhouseUrl: deriveUrls().clickhouseUrl ?? 'http://clickhouse.splp.svc:8123',
-    grafanaUrl:    deriveUrls().grafanaUrl    ?? 'http://grafana.monitoring.svc:80',
-    backendUrl:    deriveUrls().backendUrl    ?? 'http://splp-backend.splp.svc:3002',
+    clickhouseUrl: urls.clickhouseUrl ?? 'http://clickhouse.splp.svc:8123',
+    grafanaUrl:    urls.grafanaUrl    ?? 'http://grafana.monitoring.svc:80',
+    prometheusUrl: urls.prometheusUrl ?? 'http://prometheus-server.monitoring.svc:80',
+    lokiUrl:       urls.lokiUrl       ?? 'http://loki.monitoring.svc:3100',
+    backendUrl:    urls.backendUrl    ?? 'http://splp-backend.splp.svc:3002',
   }))
 
   const [security, setSecurity] = useState({
@@ -116,12 +121,14 @@ export default function Settings() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {([
-                  { key: 'wso2ApimUrl',  label: 'WSO2 API Manager URL',    icon: '🔌', placeholder: 'https://wso2-apim:9443' },
-                  { key: 'wso2IsUrl',    label: 'WSO2 Identity Server URL', icon: '🔐', placeholder: 'https://wso2-is:9444' },
-                  { key: 'kafkaBroker',  label: 'Kafka Bootstrap Server',   icon: '📨', placeholder: 'kafka:9092' },
-                  { key: 'clickhouseUrl',label: 'ClickHouse HTTP URL',      icon: '🗄️', placeholder: 'http://clickhouse:8123' },
-                  { key: 'grafanaUrl',   label: 'Grafana URL',              icon: '📊', placeholder: 'http://grafana:3000' },
-                  { key: 'backendUrl',   label: 'SPLP Backend URL',         icon: '⚙️', placeholder: 'http://backend:3002' },
+                  { key: 'wso2ApimUrl',   label: 'WSO2 API Manager URL',    icon: '🔌', placeholder: 'https://wso2-apim:9443' },
+                  { key: 'wso2IsUrl',     label: 'WSO2 Identity Server URL', icon: '🔐', placeholder: 'https://wso2-is:9444' },
+                  { key: 'kafkaBroker',   label: 'Kafka Bootstrap Server',   icon: '📨', placeholder: 'kafka:9092' },
+                  { key: 'clickhouseUrl', label: 'ClickHouse HTTP URL',      icon: '🗄️', placeholder: 'http://clickhouse:8123' },
+                  { key: 'grafanaUrl',    label: 'Grafana URL',              icon: '📊', placeholder: 'http://grafana:3000' },
+                  { key: 'prometheusUrl', label: 'Prometheus URL',           icon: '📈', placeholder: 'http://prometheus-server:80' },
+                  { key: 'lokiUrl',       label: 'Loki URL',                 icon: '📋', placeholder: 'http://loki:3100' },
+                  { key: 'backendUrl',    label: 'SPLP Backend URL',         icon: '⚙️', placeholder: 'http://backend:3002' },
                 ] as const).map(f => (
                   <div key={f.key}>
                     <label className="form-label flex items-center gap-1.5">
@@ -162,7 +169,7 @@ export default function Settings() {
                 )}
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {['WSO2 APIM','WSO2 IS','Kafka','ClickHouse','Grafana','SPLP Backend'].map(name => {
+                  {['WSO2 APIM','WSO2 IS','Kafka','ClickHouse','Grafana','Prometheus','Loki','SPLP Backend'].map(name => {
                     const svc = health?.[name]
                     const isOk = svc?.ok ?? false
                     return (

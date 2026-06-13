@@ -20,11 +20,13 @@ type SvcHealth = { ok: boolean; latency?: number; error?: string }
 type HealthMap = Record<string, SvcHealth>
 
 const COMPONENTS: { name: string; key: string; detail: string; icon: string }[] = [
-  { name: 'WSO2 API Manager 4.3', key: 'WSO2 APIM',    detail: 'Port 9443 · OAuth2/Publisher', icon: '🔌' },
+  { name: 'WSO2 API Manager 4.7', key: 'WSO2 APIM',    detail: 'Port 9443 · OAuth2/Publisher', icon: '🔌' },
   { name: 'WSO2 Identity Server', key: 'WSO2 IS',      detail: 'Port 9444 · OAuth2/OIDC',      icon: '🔐' },
   { name: 'Apache Kafka (KRaft)', key: 'Kafka',        detail: '8 topics · 1 broker',          icon: '📨' },
   { name: 'ClickHouse 24.3',      key: 'ClickHouse',   detail: 'splp DB · HTTP :8123',         icon: '🗄️' },
-  { name: 'Grafana 10.x',         key: 'Grafana',      detail: 'Port 3000 · dashboards',       icon: '📊' },
+  { name: 'Grafana',              key: 'Grafana',      detail: 'Port 3000 · dashboards',       icon: '📊' },
+  { name: 'Prometheus',           key: 'Prometheus',   detail: 'metrics · node + k8s',         icon: '📈' },
+  { name: 'Loki',                 key: 'Loki',         detail: 'log aggregation · 7d',         icon: '📋' },
   { name: 'SPLP Backend',         key: 'SPLP Backend', detail: 'Node.js · Express API',        icon: '⚙️' },
 ]
 
