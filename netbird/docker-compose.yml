@@ -46,18 +46,18 @@ services:
 
   # ─── NetBird Management Server ───────────────────────────────────────────
   management:
-    image: netbirdio/management:latest
+    image: netbirdio/management:0.28.9
     restart: unless-stopped
     depends_on:
       - signal
     ports:
       - "33073:33073"
       - "33073:33073/udp"
+      - "8091:80"
     volumes:
       - netbird_mgmt:/var/lib/netbird
       - ./management.json:/etc/netbird/management.json
     command:
-      - --port=33073
       - --log-file=console
       - --log-level=info
       - --disable-anonymous-metrics=true
