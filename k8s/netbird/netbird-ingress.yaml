@@ -60,3 +60,55 @@ spec:
                 name: netbird-dashboard
                 port:
                   number: 80
+---
+## NetBird Signal Server — Ingress via k3d
+## Signal berjalan di Docker host port 10000.
+## k3d nginx ingress proxy ke host melalui Endpoint manual.
+---
+## Endpoint manual → host Docker gateway port 10000
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: netbird-signal
+  namespace: monitoring
+subsets:
+  - addresses:
+      - ip: HOST_GATEWAY_IP
+    ports:
+      - port: 10000
+        protocol: TCP
+---
+## Service tanpa selector (menggunakan Endpoint di atas)
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-signal
+  namespace: monitoring
+spec:
+  ports:
+    - port: 10000
+      targetPort: 10000
+      protocol: TCP
+---
+## Ingress untuk signal (tanpa TLS untuk HTTP signal)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbird-signal
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: netbird-signal.SPLP_DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: netbird-signal
+                port:
+                  number: 10000

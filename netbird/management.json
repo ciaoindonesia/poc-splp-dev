@@ -22,8 +22,8 @@
     },
     "Relay": null,
     "Signal": {
-        "Proto": "http",
-        "URI": "localhost:10000",
+        "Proto": "https",
+        "URI": "netbird-signal.dev-indonesia.com",
         "Username": "",
         "Password": ""
     },
