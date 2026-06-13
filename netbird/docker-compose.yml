@@ -55,7 +55,7 @@ services:
       - "33073:33073/udp"
     volumes:
       - netbird_mgmt:/var/lib/netbird
-      - ./management.json:/etc/netbird/management.json:ro
+      - ./management.json:/etc/netbird/management.json
     command:
       - --port=33073
       - --log-file=console
@@ -65,18 +65,20 @@ services:
 
   # ─── NetBird Dashboard (Web UI) ──────────────────────────────────────────
   dashboard:
-    image: netbirdio/dashboard:latest
+    image: netbirdio/dashboard:v2.3.0
     restart: unless-stopped
     ports:
       - "8088:80"
     environment:
-      - AUTH_AUDIENCE=netbird-dashboard
-      - AUTH_CLIENT_ID=netbird-dashboard
+      - AUTH_AUDIENCE=88ySb5TirNgrz5TFL_SlZ98qjRwa
+      - AUTH_CLIENT_ID=88ySb5TirNgrz5TFL_SlZ98qjRwa
       - AUTH_AUTHORITY=https://is.dev-indonesia.com/oauth2/oidcdiscovery
       - AUTH_SUPPORTED_SCOPES=openid profile email
+      - AUTH_REDIRECT_URI=/auth
+      - AUTH_SILENT_REDIRECT_URI=/silent-auth
       - USE_AUTH0=false
-      - NETBIRD_MGMT_API_ENDPOINT=https://netbird.dev-indonesia.com:33073
-      - NETBIRD_MGMT_GRPC_API_ENDPOINT=https://netbird.dev-indonesia.com:33073
+      - NETBIRD_MGMT_API_ENDPOINT=https://netbird-mgmt.dev-indonesia.com
+      - NETBIRD_MGMT_GRPC_API_ENDPOINT=https://netbird-mgmt.dev-indonesia.com
 
 volumes:
   netbird_mgmt:

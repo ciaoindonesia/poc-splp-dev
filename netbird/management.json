@@ -1,78 +1,110 @@
 {
-  "Stuns": [
-    {
-      "Proto": "udp",
-      "URI": "stun:netbird.dev-indonesia.com:3478",
-      "Username": "",
-      "Password": ""
-    }
-  ],
-  "TURNConfig": {
-    "Turns": [
-      {
-        "Proto": "udp",
-        "URI": "turn:netbird.dev-indonesia.com:3478",
-        "Username": "splp",
-        "Password": "splp-turn-2026"
-      }
+    "Stuns": [
+        {
+            "Proto": "udp",
+            "URI": "stun:netbird.dev-indonesia.com:3478",
+            "Username": "",
+            "Password": ""
+        }
     ],
-    "CredentialsTTL": "12h",
-    "Secret": "splp-turn-secret-2026",
-    "TimeBasedCredentials": false
-  },
-  "Signal": {
-    "Proto": "https",
-    "URI": "netbird.dev-indonesia.com:10000",
-    "Username": "",
-    "Password": ""
-  },
-  "Datadir": "/var/lib/netbird/",
-  "HttpConfig": {
-    "LetsEncryptDomain": "",
-    "CertFile": "",
-    "CertKey": "",
-    "AuthAudience": "netbird-dashboard",
-    "AuthIssuer": "https://is.dev-indonesia.com/oauth2/token",
-    "AuthKeysLocation": "https://is.dev-indonesia.com/oauth2/jwks",
-    "OIDCConfigEndpoint": "https://is.dev-indonesia.com/oauth2/oidcdiscovery/.well-known/openid-configuration"
-  },
-  "IdpManagerConfig": {
-    "ManagerType": "generic",
-    "ClientConfig": {
-      "Issuer": "https://is.dev-indonesia.com/oauth2/token",
-      "TokenEndpoint": "https://is.dev-indonesia.com/oauth2/token",
-      "ClientID": "netbird-mgmt-client",
-      "ClientSecret": "NETBIRD_MGMT_CLIENT_SECRET",
-      "GrantType": "client_credentials"
-    }
-  },
-  "DeviceAuthorizationFlow": {
-    "Provider": "generic",
-    "ProviderConfig": {
-      "ClientID": "netbird-device",
-      "Audience": "netbird-dashboard",
-      "Domain": "is.dev-indonesia.com",
-      "TokenEndpoint": "https://is.dev-indonesia.com/oauth2/token",
-      "DeviceAuthEndpoint": "https://is.dev-indonesia.com/oauth2/device_authorize",
-      "Scopes": ["openid", "profile", "email"],
-      "UseIDToken": true,
-      "RedirectURLs": []
-    }
-  },
-  "PKCEAuthorizationFlow": {
-    "ProviderConfig": {
-      "ClientID": "netbird-dashboard",
-      "ClientSecret": "",
-      "Domain": "is.dev-indonesia.com",
-      "Audience": "netbird-dashboard",
-      "TokenEndpoint": "https://is.dev-indonesia.com/oauth2/token",
-      "DeviceAuthEndpoint": "https://is.dev-indonesia.com/oauth2/device_authorize",
-      "Scopes": ["openid", "profile", "email"],
-      "UseIDToken": true,
-      "RedirectURLs": [
-        "https://netbird.dev-indonesia.com/auth",
-        "http://localhost:53000"
-      ]
-    }
-  }
+    "TURNConfig": {
+        "TimeBasedCredentials": false,
+        "CredentialsTTL": "12h0m0s",
+        "Secret": "splp-turn-secret-2026",
+        "Turns": [
+            {
+                "Proto": "udp",
+                "URI": "turn:netbird.dev-indonesia.com:3478",
+                "Username": "splp",
+                "Password": "splp-turn-2026"
+            }
+        ]
+    },
+    "Relay": null,
+    "Signal": {
+        "Proto": "https",
+        "URI": "netbird.dev-indonesia.com:10000",
+        "Username": "",
+        "Password": ""
+    },
+    "Datadir": "/var/lib/netbird/",
+    "DataStoreEncryptionKey": "zbzZnhpqbQ+tdXzimI5HuMpwBGTdhapQEamc/8ROMLs=",
+    "HttpConfig": {
+        "LetsEncryptDomain": "",
+        "CertFile": "",
+        "CertKey": "",
+        "AuthClientID": "",
+        "AuthAudience": "88ySb5TirNgrz5TFL_SlZ98qjRwa",
+        "CLIAuthAudience": "",
+        "AuthIssuer": "https://is.dev-indonesia.com/oauth2/token",
+        "AuthUserIDClaim": "",
+        "AuthKeysLocation": "https://is.dev-indonesia.com/oauth2/jwks",
+        "OIDCConfigEndpoint": "https://is.dev-indonesia.com/oauth2/oidcdiscovery/.well-known/openid-configuration",
+        "IdpSignKeyRefreshEnabled": false,
+        "ExtraAuthAudience": "",
+        "AuthCallbackURL": ""
+    },
+    "IdpManagerConfig": {
+        "ManagerType": "none",
+        "ClientConfig": {
+            "Issuer": "https://is.dev-indonesia.com/oauth2/token",
+            "TokenEndpoint": "https://is.dev-indonesia.com/oauth2/token",
+            "ClientID": "netbird-mgmt-client",
+            "ClientSecret": "NETBIRD_MGMT_CLIENT_SECRET",
+            "GrantType": "client_credentials"
+        },
+        "ExtraConfig": null,
+        "Auth0ClientCredentials": null,
+        "AzureClientCredentials": null,
+        "KeycloakClientCredentials": null,
+        "ZitadelClientCredentials": null
+    },
+    "DeviceAuthorizationFlow": {
+        "Provider": "generic",
+        "ProviderConfig": {
+            "ClientID": "iDqDqqocOd3RtklMi0rHin8KvhQa",
+            "ClientSecret": "",
+            "Domain": "is.dev-indonesia.com",
+            "Audience": "88ySb5TirNgrz5TFL_SlZ98qjRwa",
+            "TokenEndpoint": "https://is.dev-indonesia.com/oauth2/token",
+            "DeviceAuthEndpoint": "https://is.dev-indonesia.com/oauth2/device_authorize",
+            "AuthorizationEndpoint": "",
+            "Scope": "openid",
+            "UseIDToken": true,
+            "RedirectURLs": [],
+            "DisablePromptLogin": false,
+            "LoginFlag": 0
+        }
+    },
+    "PKCEAuthorizationFlow": {
+        "ProviderConfig": {
+            "ClientID": "88ySb5TirNgrz5TFL_SlZ98qjRwa",
+            "ClientSecret": "",
+            "Domain": "is.dev-indonesia.com",
+            "Audience": "88ySb5TirNgrz5TFL_SlZ98qjRwa",
+            "TokenEndpoint": "https://is.dev-indonesia.com/oauth2/token",
+            "DeviceAuthEndpoint": "https://is.dev-indonesia.com/oauth2/device_authorize",
+            "AuthorizationEndpoint": "https://is.dev-indonesia.com/oauth2/authorize",
+            "Scope": "",
+            "UseIDToken": true,
+            "RedirectURLs": [
+                "https://netbird.dev-indonesia.com/auth",
+                "http://localhost:53000"
+            ],
+            "DisablePromptLogin": false,
+            "LoginFlag": 0
+        }
+    },
+    "StoreConfig": {
+        "Engine": ""
+    },
+    "ReverseProxy": {
+        "TrustedHTTPProxies": null,
+        "TrustedHTTPProxiesCount": 0,
+        "TrustedPeers": null,
+        "AccessLogRetentionDays": 0,
+        "AccessLogCleanupIntervalHours": 0
+    },
+    "DisableDefaultPolicy": false,
+    "EmbeddedIdP": null
 }
