@@ -5,9 +5,11 @@ function getGrafanaUrl(): string {
   if (import.meta.env.VITE_GRAFANA_URL) return import.meta.env.VITE_GRAFANA_URL
   if (typeof window === 'undefined') return 'http://localhost:3000'
   const h = window.location.hostname
-  const p = window.location.port ? `:${window.location.port}` : ''
   if (h === 'localhost' || h === '127.0.0.1') return `http://localhost:3000`
-  return `http://grafana.${h}${p}`
+  const parts = h.split('.')
+  const base = parts.length > 2 ? parts.slice(1).join('.') : h
+  const proto = window.location.protocol.replace(':', '')
+  return `${proto}://grafana.${base}`
 }
 
 const GRAFANA_URL = getGrafanaUrl()

@@ -40,6 +40,10 @@ sed -i "s/apim\.SPLP_DOMAIN/apim.$NEW_DOMAIN/g; s/api\.SPLP_DOMAIN/api.$NEW_DOMA
   "$ROOT/k8s/wso2-apim/wso2-apim.yaml"
 echo "✅ k8s/wso2-apim/wso2-apim.yaml diperbarui → apim.$NEW_DOMAIN"
 
+sed -i "s/grafana\.SPLP_DOMAIN/grafana.$NEW_DOMAIN/g" \
+  "$ROOT/k8s/grafana/grafana-values.yaml"
+echo "✅ k8s/grafana/grafana-values.yaml diperbarui → grafana.$NEW_DOMAIN"
+
 # ── Apply ke cluster (jika kubectl tersedia) ──────────────────────────────────
 if kubectl cluster-info &>/dev/null 2>&1; then
   kubectl apply -f "$OUT"

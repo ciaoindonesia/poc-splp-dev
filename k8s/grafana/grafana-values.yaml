@@ -19,7 +19,7 @@ resources:
 
 grafana.ini:
   server:
-    domain: grafana.pocsplp.com
+    domain: grafana.SPLP_DOMAIN
     root_url: "%(protocol)s://%(domain)s"
   auth.anonymous:
     enabled: true
@@ -29,7 +29,7 @@ grafana.ini:
   security:
     allow_embedding: true
     cookie_samesite: none
-    cookie_secure: false
+    cookie_secure: true
 
 datasources:
   datasources.yaml:
