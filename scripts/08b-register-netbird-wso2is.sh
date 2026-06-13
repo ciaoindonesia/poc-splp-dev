@@ -2,9 +2,6 @@
 # =============================================================================
 # Register NetBird OAuth2 Applications di WSO2 IS
 # Usage: bash scripts/08b-register-netbird-wso2is.sh
-#
-# Fix: WSO2 IS ini hanya terima 1 callbackURL saat POST create.
-#      URL tambahan + PKCE + JWT di-update via PATCH setelah create.
 # =============================================================================
 
 IS_URL="https://is.dev-indonesia.com"
@@ -16,9 +13,6 @@ echo "================================================================="
 echo " Register NetBird Apps di WSO2 IS: $IS_URL"
 echo "================================================================="
 
-# ─────────────────────────────────────────────────────────────────────────────
-# get_app_id_by_name <name>
-# ─────────────────────────────────────────────────────────────────────────────
 get_app_id_by_name() {
   local NAME="$1"
   curl -sk \
@@ -32,33 +26,8 @@ print(apps[0]['id'] if apps else '')
 " 2>/dev/null || echo ""
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# create_app <name> <grant_types_json> <single_callback_url> <public_client>
-# Returns app ID atau kosong jika gagal
-# PENTING: hanya 1 callbackURL di POST — WSO2 IS ini 500 jika >1
-# ─────────────────────────────────────────────────────────────────────────────
 create_app() {
-  local NAME="$1"
-  local GRANTS="$2"
-  local CALLBACK="$3"
-  local PUBLIC="${4:-true}"
-
-  local PAYLOAD
-  PAYLOAD=$(python3 -c "
-import json
-print(json.dumps({
-  'name': '${NAME}',
-  'description': 'NetBird VPN - ${NAME}',
-  'inboundProtocolConfiguration': {
-    'oidc': {
-      'grantTypes': ${GRANTS},
-      'callbackURLs': ['${CALLBACK}'],
-      'publicClient': ${PUBLIC}
-    }
-  }
-}))
-")
-
+  local PAYLOAD="$1"
   local HEADERS
   HEADERS=$(curl -sk -i -X POST \
     "${IS_URL}/api/server/v1/applications" \
@@ -72,16 +41,11 @@ print(json.dumps({
   if [ "$HTTP_STATUS" = "201" ]; then
     echo "$HEADERS" | grep -i "^location:" | sed 's|.*/||' | tr -d '\r\n'
   else
-    local BODY
-    BODY=$(echo "$HEADERS" | grep -A1 "^{" | head -1)
-    echo "   ⚠️  HTTP ${HTTP_STATUS}: ${BODY}" >&2
+    echo "   ⚠️  HTTP ${HTTP_STATUS}" >&2
     echo ""
   fi
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# patch_oidc <app_id> <json_payload>
-# ─────────────────────────────────────────────────────────────────────────────
 patch_oidc() {
   local APP_ID="$1"
   local PAYLOAD="$2"
@@ -92,9 +56,6 @@ patch_oidc() {
     -d "$PAYLOAD"
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# get_client_id <app_id>
-# ─────────────────────────────────────────────────────────────────────────────
 get_client_id() {
   local APP_ID="$1"
   curl -sk \
@@ -103,9 +64,6 @@ get_client_id() {
     python3 -c "import sys,json; print(json.load(sys.stdin).get('clientId',''))" 2>/dev/null || echo ""
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# delete_app <app_id>
-# ─────────────────────────────────────────────────────────────────────────────
 delete_app() {
   local APP_ID="$1"
   curl -sk -o /dev/null -w "%{http_code}" -X DELETE \
@@ -118,12 +76,11 @@ delete_app() {
 # =============================================================================
 echo ""
 echo "[cleanup] Hapus app percobaan sebelumnya jika ada..."
-
 for NAME in "netbird-dashboard-test" "netbird-web" "netbirddashboard"; do
   ID=$(get_app_id_by_name "$NAME")
   if [ -n "$ID" ]; then
     STATUS=$(delete_app "$ID")
-    echo "   🗑️  Hapus '${NAME}' (${ID}) → HTTP ${STATUS}"
+    echo "   🗑️  Hapus '${NAME}' → HTTP ${STATUS}"
   fi
 done
 
@@ -138,12 +95,18 @@ APP_ID_DASH=$(get_app_id_by_name "netbird-dashboard")
 if [ -n "$APP_ID_DASH" ]; then
   echo "   ℹ️  Sudah ada → App ID: ${APP_ID_DASH}"
 else
-  echo "   → Create app (1 callback URL)..."
-  APP_ID_DASH=$(create_app \
-    "netbird-dashboard" \
-    '["authorization_code", "refresh_token"]' \
-    "https://netbird.dev-indonesia.com/auth" \
-    "true")
+  echo "   → Create app..."
+  APP_ID_DASH=$(create_app '{
+    "name": "netbird-dashboard",
+    "description": "NetBird VPN Dashboard Web UI",
+    "inboundProtocolConfiguration": {
+      "oidc": {
+        "grantTypes": ["authorization_code", "refresh_token"],
+        "callbackURLs": ["https://netbird.dev-indonesia.com/auth"],
+        "publicClient": true
+      }
+    }
+  }')
 
   if [ -n "$APP_ID_DASH" ]; then
     echo "   ✅ Created → App ID: ${APP_ID_DASH}"
@@ -153,7 +116,7 @@ else
   fi
 fi
 
-echo "   → PATCH: tambah callback localhost + PKCE + JWT..."
+echo "   → PATCH: tambah callback + PKCE + JWT..."
 PATCH_STATUS=$(patch_oidc "$APP_ID_DASH" '{
   "callbackURLs": [
     "https://netbird.dev-indonesia.com/auth",
@@ -186,11 +149,20 @@ if [ -n "$APP_ID_DEV" ]; then
   echo "   ℹ️  Sudah ada → App ID: ${APP_ID_DEV}"
 else
   echo "   → Create app..."
-  APP_ID_DEV=$(create_app \
-    "netbird-device" \
-    '["urn:ietf:params:oauth:grant-type:device_code", "refresh_token"]' \
-    "http://localhost" \
-    "true")
+  APP_ID_DEV=$(create_app '{
+    "name": "netbird-device",
+    "description": "NetBird VPN Device Authorization (CLI peers)",
+    "inboundProtocolConfiguration": {
+      "oidc": {
+        "grantTypes": [
+          "urn:ietf:params:oauth:grant-type:device_code",
+          "refresh_token"
+        ],
+        "callbackURLs": ["http://localhost"],
+        "publicClient": true
+      }
+    }
+  }')
 
   if [ -n "$APP_ID_DEV" ]; then
     echo "   ✅ Created → App ID: ${APP_ID_DEV}"
