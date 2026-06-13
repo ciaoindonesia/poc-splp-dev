@@ -8,8 +8,8 @@ Platform Pertukaran Data Pemerintah (SPLP) — PoC untuk demo integrasi layanan 
 |----------|-----------|
 | Frontend Portal | React + Vite + TailwindCSS |
 | Backend API | Node.js + Express |
-| API Management | WSO2 API Manager 4.3 |
-| Identity | WSO2 Identity Server |
+| API Management | WSO2 API Manager 4.7.0 |
+| Identity | WSO2 Identity Server 7.3.0 |
 | Streaming | Apache Kafka |
 | Analytics DB | ClickHouse |
 | Monitoring | Grafana |
@@ -28,7 +28,10 @@ Edit `domain.conf`, ganti `BASE_DOMAIN` sesuai kebutuhan:
 
 ```bash
 # Untuk development lokal
-BASE_DOMAIN=pocsplp.com
+BASE_DOMAIN=localhost
+
+# Untuk server PoC (saat ini aktif)
+BASE_DOMAIN=dev-indonesia.com
 
 # Untuk server production
 BASE_DOMAIN=splp.go.id
@@ -43,32 +46,32 @@ bash scripts/recreate-cluster.sh
 ### 3. Ganti domain di kemudian hari
 
 ```bash
-bash scripts/set-domain.sh splp.go.id
+bash scripts/set-domain.sh dev-indonesia.com
 ```
 
 ## Akses Layanan
 
 | Layanan | URL | Username | Password |
 |---------|-----|----------|----------|
-| **SPLP Portal** | http://portal.pocsplp.com | lihat Akun Demo | — |
-| **Backend API** | http://api-backend.pocsplp.com | — | — |
-| **WSO2 APIM Publisher** | https://apim.pocsplp.com/publisher | `admin` | `admin` |
-| **WSO2 APIM Developer Portal** | https://apim.pocsplp.com/devportal | `admin` | `admin` |
-| **WSO2 APIM Admin** | https://apim.pocsplp.com/admin | `admin` | `admin` |
-| **WSO2 APIM Carbon Console** | https://apim.pocsplp.com/carbon | `admin` | `admin` |
-| **WSO2 Identity Server** | https://is.pocsplp.com/console | `admin` | `admin` |
-| **Grafana** | http://grafana.pocsplp.com | anonymous | — |
-| **Kafka UI** | http://kafka-ui.pocsplp.com | — | — |
+| **SPLP Portal** | https://dev-indonesia.com | lihat Akun Demo | — |
+| **Backend API** | https://api-backend.dev-indonesia.com | — | — |
+| **WSO2 APIM Publisher** | https://apim.dev-indonesia.com/publisher | `admin` | `admin` |
+| **WSO2 APIM Developer Portal** | https://apim.dev-indonesia.com/devportal | `admin` | `admin` |
+| **WSO2 APIM Admin** | https://apim.dev-indonesia.com/admin | `admin` | `admin` |
+| **WSO2 APIM Carbon Console** | https://apim.dev-indonesia.com/carbon | `admin` | `admin` |
+| **WSO2 Identity Server** | https://is.dev-indonesia.com/console | `admin` | `admin` |
+| **Grafana** | https://grafana.dev-indonesia.com | anonymous | — |
+| **ClickHouse** | https://clickhouse.dev-indonesia.com | `splp_user` | `splp_pass_2026` |
+| **Kafka UI** | https://kafka-ui.dev-indonesia.com | — | — |
 
 ### APIM REST API (internal)
 
 | Endpoint | Keterangan |
 |----------|-----------|
-| `https://apim.pocsplp.com/api/am/publisher/v4` | Publisher API |
-| `https://apim.pocsplp.com/api/am/devportal/v3` | Developer Portal API |
-| `https://apim.pocsplp.com/oauth2/token` | OAuth2 Token endpoint |
-| `http://apim.pocsplp.com:8280/{context}` | API Gateway (HTTP) |
-| `https://apim.pocsplp.com:8243/{context}` | API Gateway (HTTPS) |
+| `https://apim.dev-indonesia.com/api/am/publisher/v4` | Publisher API |
+| `https://apim.dev-indonesia.com/api/am/devportal/v3` | Developer Portal API |
+| `https://apim.dev-indonesia.com/oauth2/token` | OAuth2 Token endpoint |
+| `https://apim.dev-indonesia.com/{context}` | API Gateway (via ingress) |
 
 ## Akun Demo
 
@@ -95,11 +98,17 @@ poc-splp-dev/
 │   ├── ingress/         # Nginx ingress (di-generate dari template)
 │   ├── splp-apps/       # Portal & backend deployments
 │   ├── wso2-apim/       # WSO2 APIM manifests
-│   └── monitoring/      # Grafana & Prometheus
+│   ├── wso2-is/         # WSO2 Identity Server manifests
+│   ├── grafana/         # Grafana helm values
+│   ├── kafka/           # Strimzi Kafka + Kafka UI
+│   ├── clickhouse/      # ClickHouse + init.sql
+│   └── cert-manager/    # ClusterIssuer Let's Encrypt
 ├── scripts/
-│   ├── recreate-cluster.sh    # Setup cluster dari nol
-│   ├── set-domain.sh          # Ganti domain
-│   └── 04-register-apim-apis.sh  # Daftar APIs ke WSO2 APIM
+│   ├── recreate-cluster.sh      # Setup cluster dari nol
+│   ├── set-domain.sh            # Ganti domain (patch semua manifest)
+│   ├── 04-register-apim-apis.sh # Daftar 12 APIs ke WSO2 APIM
+│   ├── 05-setup-https.sh        # Install cert-manager + TLS
+│   └── 06-deploy-kafka.sh       # Deploy Strimzi Kafka + Kafka UI
 └── domain.conf          # Konfigurasi domain (single source of truth)
 ```
 
