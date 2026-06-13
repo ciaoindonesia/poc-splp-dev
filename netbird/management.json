@@ -22,7 +22,7 @@
     },
     "Relay": null,
     "Signal": {
-        "Proto": "https",
+        "Proto": "http",
         "URI": "localhost:10000",
         "Username": "",
         "Password": ""
