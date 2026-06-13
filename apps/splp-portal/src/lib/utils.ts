@@ -5,36 +5,46 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+function baseDomain(): string {
+  if (typeof window === 'undefined') return 'localhost'
+  const h = window.location.hostname
+  if (h === 'localhost' || h === '127.0.0.1') return h
+  const parts = h.split('.')
+  return parts.length > 2 ? parts.slice(1).join('.') : h
+}
+
+function proto(): string {
+  if (typeof window === 'undefined') return 'http'
+  return window.location.protocol.replace(':', '')
+}
+
 export function deriveApiGwUrl(): string {
   if (typeof window === 'undefined') return 'http://localhost:8280'
   const h = window.location.hostname
-  const p = window.location.port ? `:${window.location.port}` : ''
   if (h === 'localhost' || h === '127.0.0.1') return `http://localhost:8280`
-  return `http://api.${h}${p}`
+  return `${proto()}://api.${baseDomain()}`
 }
 
 export function deriveApimUiUrl(): string {
   if (typeof window === 'undefined') return 'http://localhost:8080/publisher'
   const h = window.location.hostname
-  const p = window.location.port ? `:${window.location.port}` : ''
   if (h === 'localhost' || h === '127.0.0.1') return `http://localhost:8080/publisher`
-  return `http://apim.${h}${p}/publisher`
+  return `${proto()}://apim.${baseDomain()}/publisher`
 }
 
 export function deriveKafkaBootstrap(): string {
   if (typeof window === 'undefined') return 'localhost:9092'
   const h = window.location.hostname
   if (h === 'localhost' || h === '127.0.0.1') return 'localhost:9092'
-  return `api.${h}:9092`
+  return `api.${baseDomain()}:9092`
 }
 
 export function deriveBackendUrl(): string {
   if (import.meta.env.VITE_BACKEND_URL) return import.meta.env.VITE_BACKEND_URL
   if (typeof window === 'undefined') return 'http://localhost:3002'
   const h = window.location.hostname
-  const p = window.location.port ? `:${window.location.port}` : ''
   if (h === 'localhost' || h === '127.0.0.1') return `http://localhost:3002`
-  return `http://api-backend.${h}${p}`
+  return `${proto()}://api-backend.${baseDomain()}`
 }
 
 export function formatNumber(n: number): string {
