@@ -20,15 +20,17 @@ spec:
         - name: wso2-is
           image: wso2/wso2is:7.3.0-alpine
           imagePullPolicy: IfNotPresent
-          command: ["/bin/bash", "-c"]
+          command: ["/bin/sh", "-c"]
           args:
             - |
               CONF=/home/wso2carbon/wso2is-7.3.0/repository/conf/deployment.toml
               sed -i "s|hostname = \"localhost\"|hostname = \"$(IS_HOSTNAME)\"|g" "$CONF"
               sed -i "s|issuer = \"https://localhost:9444/|issuer = \"https://$(IS_HOSTNAME)/|g" "$CONF"
-              grep -q '\[transport\.https\.properties\]' "$CONF" \
-                && sed -i 's|proxyPort = .*|proxyPort = 443|g' "$CONF" \
-                || printf '\n[transport.https.properties]\nproxyPort = 443\n' >> "$CONF"
+              if grep -q 'transport.https.properties' "$CONF"; then
+                sed -i 's|proxyPort = .*|proxyPort = 443|g' "$CONF"
+              else
+                printf '\n[transport.https.properties]\nproxyPort = 443\n' >> "$CONF"
+              fi
               exec /home/wso2carbon/docker-entrypoint.sh
           env:
             - name: JAVA_OPTS
