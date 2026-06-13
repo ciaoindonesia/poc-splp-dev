@@ -46,6 +46,10 @@ spec:
               value: "splp_pass_2026"
             - name: GRAFANA_URL
               value: "http://grafana.monitoring.svc.cluster.local:80"
+            - name: PROMETHEUS_URL
+              value: "http://prometheus-server.monitoring.svc.cluster.local:80"
+            - name: LOKI_URL
+              value: "http://loki.monitoring.svc.cluster.local:3100"
             - name: KAFKA_HOST
               value: "splp-kafka-kafka-bootstrap.messaging.svc.cluster.local"
             - name: KAFKA_PORT

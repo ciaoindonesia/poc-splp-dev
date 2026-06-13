@@ -13,8 +13,9 @@ type Role = 'admin' | 'instansi'
 
 type SvcStatus = { ok: boolean }
 const DEFAULT_STATUS: Record<string, SvcStatus> = {
-  'WSO2 APIM': { ok: false }, 'WSO2 IS': { ok: false },
-  'Kafka':     { ok: false }, 'ClickHouse': { ok: false }, 'Grafana': { ok: false },
+  'WSO2 APIM': { ok: false }, 'WSO2 IS':  { ok: false },
+  'Kafka':     { ok: false }, 'ClickHouse': { ok: false },
+  'Grafana':   { ok: false }, 'Prometheus': { ok: false }, 'Loki': { ok: false },
 }
 
 function useServiceHealth() {
@@ -122,7 +123,7 @@ export default function Sidebar({ open, currentPath }: Props) {
         <div className="p-3 border-t border-slate-100">
           <div className="bg-slate-50 rounded-xl p-3">
             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Status Layanan</div>
-            {['WSO2 APIM','WSO2 IS','Kafka','ClickHouse','Grafana'].map(name => {
+            {['WSO2 APIM','WSO2 IS','Kafka','ClickHouse','Grafana','Prometheus','Loki'].map(name => {
               const up = svcHealth[name]?.ok ?? false
               return (
                 <div key={name} className="flex items-center justify-between py-0.5">

@@ -83,6 +83,8 @@ const SVC = {
   wso2Is:      process.env.WSO2_IS_URL      || 'https://localhost:9444',
   clickhouse:  process.env.CLICKHOUSE_URL   || 'http://localhost:8888',
   grafana:     process.env.GRAFANA_URL      || 'http://localhost:3000',
+  prometheus:  process.env.PROMETHEUS_URL   || 'http://prometheus-server.monitoring.svc.cluster.local:80',
+  loki:        process.env.LOKI_URL         || 'http://loki.monitoring.svc.cluster.local:3100',
   kafkaHost:   process.env.KAFKA_HOST       || 'localhost',
   kafkaPort:   parseInt(process.env.KAFKA_PORT || '30292'),
   kafkaAlt:    process.env.KAFKA_BOOTSTRAP   || '',
@@ -153,7 +155,7 @@ const validateWso2User = (username, password) => new Promise(resolve => {
 
 /* ── REST Routes ─────────────────────────────────── */
 app.get('/api/health/services', async (_, res) => {
-  const [apim, is_, ch, gf, kf] = await Promise.all([
+  const [apim, is_, ch, gf, kf, prom, loki] = await Promise.all([
     probeHttp(`${SVC.wso2Apim}/carbon/admin/login.jsp`),
     probeHttp(`${SVC.wso2Is}/carbon/admin/login.jsp`),
     probeHttp(`${SVC.clickhouse}/ping`),
@@ -165,16 +167,20 @@ app.get('/api/health/services', async (_, res) => {
       }
       return r
     }),
+    probeHttp(`${SVC.prometheus}/-/healthy`),
+    probeHttp(`${SVC.loki}/ready`),
   ])
   res.json({
     timestamp: new Date().toISOString(),
     services: {
-      'WSO2 APIM':    { ok: apim.ok, latency: apim.latency,  error: apim.error },
-      'WSO2 IS':      { ok: is_.ok,  latency: is_.latency,   error: is_.error  },
-      'ClickHouse':   { ok: ch.ok,   latency: ch.latency,    error: ch.error   },
-      'Grafana':      { ok: gf.ok,   latency: gf.latency,    error: gf.error   },
-      'Kafka':        { ok: kf.ok,   latency: kf.latency,    error: kf.error   },
-      'SPLP Backend': { ok: true,    latency: 1 },
+      'WSO2 APIM':    { ok: apim.ok,  latency: apim.latency,  error: apim.error  },
+      'WSO2 IS':      { ok: is_.ok,   latency: is_.latency,   error: is_.error   },
+      'ClickHouse':   { ok: ch.ok,    latency: ch.latency,    error: ch.error    },
+      'Grafana':      { ok: gf.ok,    latency: gf.latency,    error: gf.error    },
+      'Kafka':        { ok: kf.ok,    latency: kf.latency,    error: kf.error    },
+      'Prometheus':   { ok: prom.ok,  latency: prom.latency,  error: prom.error  },
+      'Loki':         { ok: loki.ok,  latency: loki.latency,  error: loki.error  },
+      'SPLP Backend': { ok: true,     latency: 1 },
     },
   })
 })
