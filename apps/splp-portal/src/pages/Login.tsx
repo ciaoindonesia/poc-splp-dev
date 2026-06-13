@@ -3,12 +3,15 @@ import { useAuth } from '../contexts/AuthContext'
 import { Eye, EyeOff, Loader2, Shield } from 'lucide-react'
 
 const DEMO_ACCOUNTS = [
-  { username: 'admin',       password: 'admin',       label: 'Admin SPLP',         icon: '🏛️' },
-  { username: 'dukcapil',    password: 'Admin@12345', label: 'Operator Dukcapil',  icon: '🪪' },
-  { username: 'djp',         password: 'Admin@12345', label: 'Operator DJP',       icon: '💰' },
-  { username: 'bpjs',        password: 'Admin@12345', label: 'Operator BPJS',      icon: '🏥' },
-  { username: 'polri',       password: 'Admin@12345', label: 'Operator POLRI',     icon: '🚔' },
-  { username: 'kemensos',    password: 'Admin@12345', label: 'Operator Kemensos',  icon: '🤝' },
+  { username: 'admin',       password: 'admin123',     label: 'Admin SPLP',              icon: '🏛️' },
+  { username: 'dukcapil',    password: 'instansi123',  label: 'Operator Dukcapil',       icon: '🏛️' },
+  { username: 'bpjs',        password: 'instansi123',  label: 'Operator BPJS Kesehatan', icon: '🏥' },
+  { username: 'djp',         password: 'instansi123',  label: 'Operator DJP',            icon: '💰' },
+  { username: 'polri',       password: 'instansi123',  label: 'Operator POLRI',          icon: '🚔' },
+  { username: 'kemensos',    password: 'instansi123',  label: 'Operator Kemensos',       icon: '🤝' },
+  { username: 'kemenkes',    password: 'instansi123',  label: 'Operator Kemenkes',       icon: '⚕️' },
+  { username: 'kemendagri',  password: 'instansi123',  label: 'Operator Kemendagri',     icon: '🏠' },
+  { username: 'kemenkumham', password: 'instansi123',  label: 'Operator Kemenkumham',    icon: '⚖️' },
 ]
 
 export default function Login() {
@@ -139,7 +142,7 @@ export default function Login() {
               ))}
             </div>
             <p className="text-[10px] text-slate-400 text-center mt-2">
-              Klik akun demo lalu klik <strong>Masuk</strong> — admin: <code className="font-mono">admin</code> | instansi: <code className="font-mono">Admin@12345</code>
+              Klik akun demo lalu klik <strong>Masuk</strong> — admin: <code className="font-mono">admin123</code> | instansi: <code className="font-mono">instansi123</code>
             </p>
           </div>
         </div>
