@@ -7,7 +7,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DOMAIN=$(grep '^BASE_DOMAIN=' "${SCRIPT_DIR}/../domain.conf" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo 'pocsplp.com')
-APIM="${1:-http://apim.${BASE_DOMAIN}}"
+APIM="${1:-https://apim.${BASE_DOMAIN}}"
 MOCK_BACKEND="http://splp-backend.splp.svc.cluster.local:3002/api/mock"
 CID="B9fqPOPPRc0B1XTwdbKwCDp6drUa"
 CSE="sjunTt1jFEzHJJALMvqGQGEPMJEa"
@@ -25,7 +25,7 @@ create_api() {
   local name="$1" version="$2" context="$3" method="$4" path="$5" tags="$6" desc="$7" backendPath="$8"
 
   # Check if already exists
-  EXISTING=$(curl -sf -H "$H_AUTH" "$PUB/apis?query=name:$name" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['list'][0]['id'] if d['count']>0 else '')" 2>/dev/null || echo "")
+  EXISTING=$(curl -sfk -H "$H_AUTH" "$PUB/apis?query=name:$name" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['list'][0]['id'] if d['count']>0 else '')" 2>/dev/null || echo "")
   if [ -n "$EXISTING" ]; then
     echo "  ⏭  $name — sudah ada (id=${EXISTING:0:8}...), skip"
     return
@@ -47,7 +47,7 @@ print(json.dumps({
   'lifeCycleStatus': 'CREATED',
 }))")
 
-  API_ID=$(curl -sf -H "$H_AUTH" -H "$H_JSON" \
+  API_ID=$(curl -sfk -H "$H_AUTH" -H "$H_JSON" \
     -X POST "$PUB/apis" -d "$BODY" \
     | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null || echo "")
 
@@ -57,7 +57,7 @@ print(json.dumps({
   fi
 
   # Publish
-  curl -sf -H "$H_AUTH" -X POST "$PUB/apis/change-lifecycle?apiId=$API_ID&action=Publish" > /dev/null 2>&1 || true
+  curl -sfk -H "$H_AUTH" -X POST "$PUB/apis/change-lifecycle?apiId=$API_ID&action=Publish" > /dev/null 2>&1 || true
   echo "  ✅ $name ($version) → PUBLISHED [id=${API_ID:0:8}...]"
 }
 
