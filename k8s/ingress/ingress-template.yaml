@@ -204,6 +204,34 @@ spec:
                 port:
                   number: 80
 ---
+## Loki HTTP API
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: loki
+  namespace: monitoring
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - loki.SPLP_DOMAIN
+      secretName: tls-loki-SPLP_DOMAIN
+  rules:
+    - host: loki.SPLP_DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loki
+                port:
+                  number: 3100
+---
 ## ClickHouse HTTP UI
 apiVersion: networking.k8s.io/v1
 kind: Ingress

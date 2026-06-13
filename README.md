@@ -62,7 +62,7 @@ bash scripts/set-domain.sh dev-indonesia.com
 | **WSO2 Identity Server** | https://is.dev-indonesia.com/console | `admin` | `admin` |
 | **Grafana** | https://grafana.dev-indonesia.com | anonymous | — |
 | **Prometheus** | internal (monitoring ns) | — | — |
-| **Loki** | internal (monitoring ns) | — | — |
+| **Loki API** | https://loki.dev-indonesia.com | — (no auth) | — |
 | **ClickHouse** | https://clickhouse.dev-indonesia.com | `splp_user` | `splp_pass_2026` |
 | **Kafka UI** | https://kafka-ui.dev-indonesia.com | — | — |
 
