@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Share2, BookOpen, BarChart3,
-  Activity, Building2, Settings, ChevronRight, Zap, ShieldCheck, Building
+  Activity, Building2, Settings, ChevronRight, Zap, ShieldCheck, Building, LogOut
 } from 'lucide-react'
 import { cn, deriveBackendUrl } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
@@ -60,7 +60,7 @@ interface Props {
 
 export default function Sidebar({ open, currentPath }: Props) {
   const svcHealth = useServiceHealth()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const role = (user?.role ?? 'instansi') as Role
   const visibleItems = navItems.filter(item => item.roles.includes(role))
 
@@ -140,9 +140,9 @@ export default function Sidebar({ open, currentPath }: Props) {
         </div>
       )}
 
-      {/* User info */}
+      {/* User info + Logout */}
       <div className="p-3 border-t border-slate-100">
-        <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-slate-50 transition-colors">
+        <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl">
           <div className={cn('w-7 h-7 rounded-full bg-gradient-to-br flex items-center justify-center shrink-0', ROLE_COLOR[role])}>
             {role === 'admin'
               ? <ShieldCheck size={14} className="text-white" />
@@ -152,6 +152,13 @@ export default function Sidebar({ open, currentPath }: Props) {
             <div className="text-xs font-semibold text-slate-800 truncate">{user?.name || user?.username || '—'}</div>
             <div className="text-[10px] text-slate-400 truncate">{user?.email || user?.agency || '—'}</div>
           </div>
+          <button
+            onClick={logout}
+            title="Keluar dari Portal"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+          >
+            <LogOut size={14} />
+          </button>
         </div>
       </div>
     </aside>

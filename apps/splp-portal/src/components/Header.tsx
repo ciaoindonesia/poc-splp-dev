@@ -123,7 +123,7 @@ export default function Header({ onToggleSidebar, currentTime, sidebarOpen }: Pr
             </div>
           </button>
           {userMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden">
+            <div className="absolute right-0 bottom-full mb-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-100">
                 <p className="text-xs font-bold text-slate-800">{user?.name}</p>
                 <p className="text-[10px] text-slate-500">{user?.email}</p>
