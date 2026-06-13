@@ -20,7 +20,7 @@ echo "================================================================="
 #     Digunakan oleh Web Dashboard NetBird
 # ─────────────────────────────────────────────────────────────────────────────
 echo "[1/2] Register netbird-dashboard (Web UI / PKCE)..."
-RESP=$(curl -sk -X POST \
+RESP=$(curl -skv -X POST \
   "${IS_URL}/api/server/v1/applications" \
   -H "Authorization: Basic ${AUTH}" \
   -H "Content-Type: application/json" \
@@ -59,7 +59,11 @@ CLIENT_ID_DASH=$(echo "$RESP" | grep -o '"clientId":"[^"]*"' | head -1 | cut -d'
 if [ -n "$CLIENT_ID_DASH" ]; then
   echo "   ✅ netbird-dashboard Client ID: $CLIENT_ID_DASH"
 else
-  echo "   ⚠️  Mungkin sudah ada atau error. Response: $(echo $RESP | head -c 200)"
+  echo "   ❌ Gagal atau sudah ada. Response:"
+  echo "$RESP" | head -c 500
+  echo ""
+  echo "   Coba manual di WSO2 IS Console:"
+  echo "   https://is.dev-indonesia.com/console"
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -94,7 +98,11 @@ CLIENT_ID_DEV=$(echo "$RESP2" | grep -o '"clientId":"[^"]*"' | head -1 | cut -d'
 if [ -n "$CLIENT_ID_DEV" ]; then
   echo "   ✅ netbird-device Client ID: $CLIENT_ID_DEV"
 else
-  echo "   ⚠️  Mungkin sudah ada atau error. Response: $(echo $RESP2 | head -c 200)"
+  echo "   ❌ Gagal atau sudah ada. Response:"
+  echo "$RESP2" | head -c 500
+  echo ""
+  echo "   Coba manual di WSO2 IS Console:"
+  echo "   https://is.dev-indonesia.com/console"
 fi
 
 echo ""
