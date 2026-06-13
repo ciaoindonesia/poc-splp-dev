@@ -26,6 +26,9 @@ spec:
               CONF=/home/wso2carbon/wso2am-4.7.0/repository/conf/deployment.toml
               sed -i "s|hostname = \"localhost\"|hostname = \"$(APIM_HOSTNAME)\"|g" "$CONF"
               sed -i "s|service_url = \"https://localhost:9443/services/\"|service_url = \"https://$(APIM_HOSTNAME)/services/\"|g" "$CONF"
+              grep -q '\[transport\.https\.properties\]' "$CONF" \
+                && sed -i 's|proxyPort = .*|proxyPort = 443|g' "$CONF" \
+                || printf '\n[transport.https.properties]\nproxyPort = 443\n' >> "$CONF"
               exec /home/wso2carbon/docker-entrypoint.sh
           env:
             - name: JAVA_OPTS
