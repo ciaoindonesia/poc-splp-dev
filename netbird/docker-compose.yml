@@ -65,7 +65,7 @@ services:
 
   # ─── NetBird Dashboard (Web UI) ──────────────────────────────────────────
   dashboard:
-    image: netbirdio/dashboard:v2.3.0
+    image: netbirdio/dashboard:latest
     restart: unless-stopped
     ports:
       - "8088:80"
