@@ -13,6 +13,7 @@ Platform Pertukaran Data Pemerintah (SPLP) — PoC untuk demo integrasi layanan 
 | Streaming | Apache Kafka |
 | Analytics DB | ClickHouse |
 | Monitoring | Grafana + Prometheus + Loki |
+| VPN / Secure Access | NetBird (WireGuard mesh) |
 | Container | k3d (Kubernetes in Docker) |
 
 ## Setup Cepat
@@ -63,6 +64,7 @@ bash scripts/set-domain.sh dev-indonesia.com
 | **Grafana** | https://grafana.dev-indonesia.com | anonymous | — |
 | **Prometheus** | internal (monitoring ns) | — | — |
 | **Loki API** | https://loki.dev-indonesia.com | — (no auth) | — |
+| **NetBird VPN** | https://netbird.dev-indonesia.com | `admin` | setup saat deploy |
 | **ClickHouse** | https://clickhouse.dev-indonesia.com | `splp_user` | `splp_pass_2026` |
 | **Kafka UI** | https://kafka-ui.dev-indonesia.com | — | — |
 
@@ -111,8 +113,21 @@ poc-splp-dev/
 │   ├── 04-register-apim-apis.sh # Daftar 12 APIs ke WSO2 APIM
 │   ├── 05-setup-https.sh        # Install cert-manager + TLS
 │   ├── 06-deploy-kafka.sh       # Deploy Strimzi Kafka + Kafka UI
-│   └── 07-deploy-observability.sh  # Deploy Prometheus + Loki
+│   ├── 07-deploy-observability.sh  # Deploy Prometheus + Loki
+│   └── 08-setup-netbird-peer.sh    # Setup NetBird VPN peer
 └── domain.conf          # Konfigurasi domain (single source of truth)
+```
+
+## Demo VPN (Saluran Akses Aman)
+
+Lihat panduan lengkap: [`docs/demo-vpn-netbird.md`](docs/demo-vpn-netbird.md)
+
+```bash
+# Start NetBird Management Server (di host, bukan k3d)
+docker compose -f netbird/docker-compose.yml up -d
+
+# Enroll server sebagai peer
+bash scripts/08-setup-netbird-peer.sh <SETUP_KEY>
 ```
 
 ## Catatan Keamanan

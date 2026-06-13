@@ -11,6 +11,7 @@ flowchart TB
     subgraph INTERNET["🌐 Internet / Intranet"]
         DNS["DNS\n*.dev-indonesia.com\n(172.105.122.119)"]
         CERTMGR["🔒 cert-manager\nLet's Encrypt TLS"]
+        NETBIRD["🛡️ NetBird VPN\nWireGuard Mesh\nnetbird.dev-indonesia.com\n(100.64.0.0/16)"]
     end
 
     subgraph K3D["☸️  k3d Cluster — poc-splp-dev\nDebian 13 · 172.105.122.119"]
@@ -57,6 +58,8 @@ flowchart TB
     %% User → Ingress
     UA -->|"https://dev-indonesia.com"| DNS
     UB -->|"https://dev-indonesia.com"| DNS
+    UB -->|"WireGuard VPN\n(API access)"| NETBIRD
+    NETBIRD -->|"encrypted tunnel\n100.64.x.x"| BACKEND
     DNS --> CERTMGR
     CERTMGR -.->|"TLS cert"| NGINX
     DNS --> NGINX
@@ -109,6 +112,7 @@ flowchart TB
     classDef monitor   fill:#fdf4ff,stroke:#a21caf,color:#4a044e
     classDef kafka     fill:#ecfeff,stroke:#0891b2,color:#164e63
     classDef mock      fill:#f8fafc,stroke:#94a3b8,color:#475569
+    classDef vpn       fill:#fef9c3,stroke:#ca8a04,color:#713f12
 
     class UA,UB user
     class NGINX ingress
@@ -116,6 +120,7 @@ flowchart TB
     class APIM,IS wso2
     class CH data
     class GRAFANA,PROMETHEUS,LOKI,PROMTAIL monitor
+    class NETBIRD vpn
     class KAFKA,KAFKAUI kafka
     class M1,M2,M3,M4,M5,M6,M7,M8,M9 mock
     class CERTMGR ingress

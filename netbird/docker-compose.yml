@@ -1,0 +1,74 @@
+## NetBird Self-Hosted Management Server
+## Jalankan di HOST server (bukan di k3d), di folder ini:
+##   docker compose up -d
+##
+## Akses dashboard: https://netbird.dev-indonesia.com
+## Management API: https://netbird.dev-indonesia.com:33073
+## Signal Server  : netbird.dev-indonesia.com:10000
+
+version: "3"
+
+services:
+  # ─── Coturn STUN/TURN server (NAT traversal) ──────────────────────────────
+  coturn:
+    image: coturn/coturn:latest
+    restart: unless-stopped
+    network_mode: host
+    command:
+      - -n
+      - --log-file=stdout
+      - --listening-port=3478
+      - --listening-ip=0.0.0.0
+      - --realm=netbird.dev-indonesia.com
+      - --fingerprint
+      - --lt-cred-mech
+      - --user=splp:splp-turn-2026
+      - --no-cli
+
+  # ─── NetBird Signal Server ────────────────────────────────────────────────
+  signal:
+    image: netbirdio/signal:latest
+    restart: unless-stopped
+    ports:
+      - "10000:10000"
+    volumes:
+      - netbird_signal:/var/lib/netbird
+
+  # ─── NetBird Management Server ───────────────────────────────────────────
+  management:
+    image: netbirdio/management:latest
+    restart: unless-stopped
+    depends_on:
+      - signal
+    ports:
+      - "33073:33073"
+      - "33073:33073/udp"
+    volumes:
+      - netbird_mgmt:/var/lib/netbird
+      - ./management.json:/etc/netbird/management.json:ro
+    command:
+      - --port=33073
+      - --log-file=console
+      - --log-level=info
+      - --disable-anonymous-metrics=true
+      - --single-account-mode-domain=netbird.dev-indonesia.com
+
+  # ─── NetBird Dashboard (Web UI) ──────────────────────────────────────────
+  dashboard:
+    image: netbirdio/dashboard:latest
+    restart: unless-stopped
+    ports:
+      - "8088:80"
+    environment:
+      - AUTH_AUDIENCE=netbird
+      - AUTH_CLIENT_ID=netbird
+      - AUTH_AUTHORITY=https://netbird.dev-indonesia.com:33073
+      - NETBIRD_MGMT_API_ENDPOINT=https://netbird.dev-indonesia.com:33073
+      - NETBIRD_MGMT_GRPC_API_ENDPOINT=https://netbird.dev-indonesia.com:33073
+      - NGINX_SSL_PORT=443
+      - LETSENCRYPT_DOMAIN=netbird.dev-indonesia.com
+      - LETSENCRYPT_EMAIL=admin@dev-indonesia.com
+
+volumes:
+  netbird_mgmt:
+  netbird_signal:

@@ -1,0 +1,58 @@
+{
+  "Stuns": [
+    {
+      "Proto": "udp",
+      "URI": "stun:netbird.dev-indonesia.com:3478",
+      "Username": "",
+      "Password": ""
+    }
+  ],
+  "TURNConfig": {
+    "Turns": [
+      {
+        "Proto": "udp",
+        "URI": "turn:netbird.dev-indonesia.com:3478",
+        "Username": "splp",
+        "Password": "splp-turn-2026"
+      }
+    ],
+    "CredentialsTTL": "12h",
+    "Secret": "splp-turn-secret-2026",
+    "TimeBasedCredentials": false
+  },
+  "Signal": {
+    "Proto": "https",
+    "URI": "netbird.dev-indonesia.com:10000",
+    "Username": "",
+    "Password": ""
+  },
+  "Datadir": "/var/lib/netbird/",
+  "HttpConfig": {
+    "LetsEncryptDomain": "netbird.dev-indonesia.com",
+    "CertFile": "",
+    "CertKey": "",
+    "AuthAudience": "netbird",
+    "AuthIssuer": "netbird.dev-indonesia.com",
+    "AuthKeysLocation": "",
+    "OIDCConfigEndpoint": ""
+  },
+  "IdpManagerConfig": {
+    "ManagerType": "none"
+  },
+  "DeviceAuthorizationFlow": {
+    "Provider": "none"
+  },
+  "PKCEAuthorizationFlow": {
+    "ProviderConfig": {
+      "ClientID": "",
+      "ClientSecret": "",
+      "Domain": "",
+      "Audience": "",
+      "TokenEndpoint": "",
+      "DeviceAuthEndpoint": "",
+      "Scopes": [],
+      "UseIDToken": false,
+      "RedirectURLs": []
+    }
+  }
+}
