@@ -46,6 +46,30 @@ bash scripts/recreate-cluster.sh
 bash scripts/set-domain.sh splp.go.id
 ```
 
+## Akses Layanan
+
+| Layanan | URL | Username | Password |
+|---------|-----|----------|----------|
+| **SPLP Portal** | http://portal.pocsplp.com | lihat Akun Demo | — |
+| **Backend API** | http://api-backend.pocsplp.com | — | — |
+| **WSO2 APIM Publisher** | https://apim.pocsplp.com/publisher | `admin` | `admin` |
+| **WSO2 APIM Developer Portal** | https://apim.pocsplp.com/devportal | `admin` | `admin` |
+| **WSO2 APIM Admin** | https://apim.pocsplp.com/admin | `admin` | `admin` |
+| **WSO2 APIM Carbon Console** | https://apim.pocsplp.com/carbon | `admin` | `admin` |
+| **WSO2 Identity Server** | https://is.pocsplp.com/console | `admin` | `admin` |
+| **Grafana** | http://grafana.pocsplp.com | anonymous | — |
+| **Kafka UI** | http://kafka-ui.pocsplp.com | — | — |
+
+### APIM REST API (internal)
+
+| Endpoint | Keterangan |
+|----------|-----------|
+| `https://apim.pocsplp.com/api/am/publisher/v4` | Publisher API |
+| `https://apim.pocsplp.com/api/am/devportal/v3` | Developer Portal API |
+| `https://apim.pocsplp.com/oauth2/token` | OAuth2 Token endpoint |
+| `http://apim.pocsplp.com:8280/{context}` | API Gateway (HTTP) |
+| `https://apim.pocsplp.com:8243/{context}` | API Gateway (HTTPS) |
+
 ## Akun Demo
 
 | Username | Password | Role |
