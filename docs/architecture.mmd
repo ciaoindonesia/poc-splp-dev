@@ -9,31 +9,33 @@ flowchart TB
     end
 
     subgraph INTERNET["🌐 Internet / Intranet"]
-        DNS["DNS\n*.pocsplp.com"]
+        DNS["DNS\n*.dev-indonesia.com\n(172.105.122.119)"]
+        CERTMGR["🔒 cert-manager\nLet's Encrypt TLS"]
     end
 
-    subgraph K3D["☸️  k3d Cluster — poc-splp-dev"]
+    subgraph K3D["☸️  k3d Cluster — poc-splp-dev\nDebian 13 · 172.105.122.119"]
         direction TB
 
-        NGINX["🔀 Nginx Ingress Controller\nport 80 / 443"]
+        NGINX["🔀 Nginx Ingress Controller\nHTTPS port 443 / HTTP 80"]
 
         subgraph NS_SPLP["namespace: splp"]
-            PORTAL["📱 splp-portal\nReact + Vite\nport 80"]
-            BACKEND["⚙️  splp-backend\nNode.js + Express\nport 3002"]
-            CH["🗄️  ClickHouse\nAnalytics DB\nport 8123"]
+            PORTAL["📱 splp-portal\nReact + Vite\ndev-indonesia.com"]
+            BACKEND["⚙️  splp-backend\nNode.js + Express\napi-backend.dev-indonesia.com"]
+            CH["🗄️  ClickHouse\nAnalytics DB\nclickhouse.dev-indonesia.com"]
         end
 
         subgraph NS_WSO2["namespace: wso2"]
-            APIM["🔌 WSO2 API Manager 4.3\nPublisher / DevPortal / Gateway\nport 9443 / 8280"]
-            IS["🔐 WSO2 Identity Server\nOAuth2 / OIDC / SCIM2\nport 9444"]
+            APIM["🔌 WSO2 API Manager 4.7.0\nPublisher / DevPortal / Gateway\napim.dev-indonesia.com"]
+            IS["🔐 WSO2 Identity Server 7.3.0\nOAuth2 / OIDC / SCIM2\nis.dev-indonesia.com"]
         end
 
         subgraph NS_MON["namespace: monitoring"]
-            GRAFANA["📊 Grafana\nDashboard & Alerting\nport 3000"]
+            GRAFANA["📊 Grafana\nDashboard & Alerting\ngrafana.dev-indonesia.com"]
         end
 
-        subgraph NS_KAFKA["namespace: kafka (opsional)"]
-            KAFKA["📨 Apache Kafka\nStrimzi Operator\nport 9092"]
+        subgraph NS_KAFKA["namespace: messaging"]
+            KAFKA["📨 Apache Kafka 4.1\nStrimzi KRaft · 8 topics\nport 9092"]
+            KAFKAUI["🖥️  Kafka UI\nkafka-ui.dev-indonesia.com"]
         end
     end
 
@@ -50,18 +52,21 @@ flowchart TB
     end
 
     %% User → Ingress
-    UA -->|"https://pocsplp.com"| DNS
-    UB -->|"https://pocsplp.com"| DNS
+    UA -->|"https://dev-indonesia.com"| DNS
+    UB -->|"https://dev-indonesia.com"| DNS
+    DNS --> CERTMGR
+    CERTMGR -.->|"TLS cert"| NGINX
     DNS --> NGINX
 
     %% Ingress routing
-    NGINX -->|"pocsplp.com"| PORTAL
-    NGINX -->|"api-backend.pocsplp.com"| BACKEND
-    NGINX -->|"apim.pocsplp.com"| APIM
-    NGINX -->|"api.pocsplp.com"| APIM
-    NGINX -->|"id.pocsplp.com"| IS
-    NGINX -->|"grafana.pocsplp.com"| GRAFANA
-    NGINX -->|"clickhouse.pocsplp.com"| CH
+    NGINX -->|"dev-indonesia.com"| PORTAL
+    NGINX -->|"api-backend.dev-indonesia.com"| BACKEND
+    NGINX -->|"apim.dev-indonesia.com"| APIM
+    NGINX -->|"api.dev-indonesia.com"| APIM
+    NGINX -->|"is.dev-indonesia.com"| IS
+    NGINX -->|"grafana.dev-indonesia.com"| GRAFANA
+    NGINX -->|"clickhouse.dev-indonesia.com"| CH
+    NGINX -->|"kafka-ui.dev-indonesia.com"| KAFKAUI
 
     %% Portal → Backend
     PORTAL -->|"REST API"| BACKEND
@@ -75,11 +80,12 @@ flowchart TB
     BACKEND -->|"Produce / Consume"| KAFKA
 
     %% APIM → Mock endpoints
-    APIM -->|"proxy request\n(api.pocsplp.com)"| BACKEND
+    APIM -->|"proxy request\n(api.dev-indonesia.com)"| BACKEND
     BACKEND --- M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 & M9
 
     %% Monitoring
     GRAFANA -->|"query"| CH
+    KAFKAUI -->|"monitor"| KAFKA
 
     %% Auth flow
     IS -.->|"JWT token"| PORTAL
@@ -101,5 +107,6 @@ flowchart TB
     class APIM,IS wso2
     class CH data
     class GRAFANA monitor
-    class KAFKA kafka
+    class KAFKA,KAFKAUI kafka
     class M1,M2,M3,M4,M5,M6,M7,M8,M9 mock
+    class CERTMGR ingress
