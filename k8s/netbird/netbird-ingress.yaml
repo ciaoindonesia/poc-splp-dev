@@ -1,0 +1,62 @@
+## NetBird Dashboard — Ingress via k3d (TLS dari cert-manager)
+## NetBird berjalan di Docker host port 8088.
+## k3d nginx ingress proxy ke host melalui Endpoint manual.
+##
+## Cara apply:
+##   HOST_GW=$(ip route | awk '/docker0/{print $9; exit}')
+##   sed "s/HOST_GATEWAY_IP/$HOST_GW/g" k8s/netbird/netbird-ingress.yaml | kubectl apply -f -
+## Atau jalankan: bash scripts/08-setup-netbird-peer.sh --apply-ingress
+---
+## Endpoint manual → host Docker gateway port 8088
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: netbird-dashboard
+  namespace: monitoring
+subsets:
+  - addresses:
+      - ip: HOST_GATEWAY_IP
+    ports:
+      - port: 8088
+        protocol: TCP
+---
+## Service tanpa selector (menggunakan Endpoint di atas)
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-dashboard
+  namespace: monitoring
+spec:
+  ports:
+    - port: 80
+      targetPort: 8088
+      protocol: TCP
+---
+## Ingress dengan TLS cert-manager
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: netbird-dashboard
+  namespace: monitoring
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - netbird.SPLP_DOMAIN
+      secretName: tls-netbird-SPLP_DOMAIN
+  rules:
+    - host: netbird.SPLP_DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: netbird-dashboard
+                port:
+                  number: 80

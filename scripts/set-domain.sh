@@ -48,6 +48,20 @@ sed -i "s/is\.SPLP_DOMAIN/is.$NEW_DOMAIN/g" \
   "$ROOT/k8s/wso2-is/wso2-is.yaml"
 echo "✅ k8s/wso2-is/wso2-is.yaml diperbarui → is.$NEW_DOMAIN"
 
+# ── Generate netbird-ingress.yaml (patch domain + host gateway IP) ────────────
+NETBIRD_TMPL="$ROOT/k8s/netbird/netbird-ingress.yaml"
+if [ -f "$NETBIRD_TMPL" ]; then
+  HOST_GW=$(ip route 2>/dev/null | awk '/docker0/{print $9; exit}')
+  HOST_GW="${HOST_GW:-172.17.0.1}"
+  NETBIRD_OUT="$ROOT/k8s/netbird/netbird-ingress-patched.yaml"
+  sed "s/SPLP_DOMAIN/$NEW_DOMAIN/g; s/HOST_GATEWAY_IP/$HOST_GW/g" "$NETBIRD_TMPL" > "$NETBIRD_OUT"
+  echo "✅ k8s/netbird/netbird-ingress-patched.yaml dihasilkan (host gw: $HOST_GW)"
+  if kubectl cluster-info &>/dev/null 2>&1; then
+    kubectl apply -f "$NETBIRD_OUT"
+    echo "✅ NetBird ingress diterapkan ke cluster"
+  fi
+fi
+
 # ── Apply ke cluster (jika kubectl tersedia) ──────────────────────────────────
 if kubectl cluster-info &>/dev/null 2>&1; then
   kubectl apply -f "$OUT"
@@ -94,5 +108,8 @@ cat >> "$CONF" << 'EOF'
 #   APIM UI    : apim.BASE_DOMAIN
 #   Identity   : is.BASE_DOMAIN
 #   Grafana    : grafana.BASE_DOMAIN
+#   Prometheus : (internal only)
+#   Loki API   : loki.BASE_DOMAIN
+#   NetBird VPN: netbird.BASE_DOMAIN
 #   ClickHouse : clickhouse.BASE_DOMAIN
 EOF

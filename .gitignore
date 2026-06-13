@@ -44,3 +44,7 @@ coverage/
 
 # Docker
 *.tar
+
+# Generated k8s files (patched by set-domain.sh)
+k8s/ingress/ingress-all.yaml
+k8s/netbird/netbird-ingress-patched.yaml
