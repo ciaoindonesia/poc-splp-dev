@@ -20,9 +20,18 @@ spec:
         - name: wso2-apim
           image: wso2/wso2am:4.7.0-alpine
           imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              CONF=/home/wso2carbon/wso2am-4.7.0/repository/conf/deployment.toml
+              sed -i "s|hostname = \"localhost\"|hostname = \"$(APIM_HOSTNAME)\"|g" "$CONF"
+              sed -i "s|service_url = \"https://localhost:9443/services/\"|service_url = \"https://$(APIM_HOSTNAME)/services/\"|g" "$CONF"
+              exec /home/wso2carbon/docker-entrypoint.sh
           env:
             - name: JAVA_OPTS
               value: "-Xms512m -Xmx2g"
+            - name: APIM_HOSTNAME
+              value: "apim.SPLP_DOMAIN"
           ports:
             - containerPort: 9443
               name: https
@@ -51,14 +60,7 @@ spec:
             initialDelaySeconds: 120
             periodSeconds: 30
             failureThreshold: 5
-          volumeMounts:
-            - name: apim-config
-              mountPath: /home/wso2carbon/wso2am-4.7.0/repository/conf/deployment.toml
-              subPath: deployment.toml
-      volumes:
-        - name: apim-config
-          configMap:
-            name: wso2-apim-config
+          volumeMounts: []
 ---
 apiVersion: v1
 kind: ConfigMap
