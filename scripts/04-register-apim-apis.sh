@@ -14,14 +14,9 @@ CSE="sjunTt1jFEzHJJALMvqGQGEPMJEa"
 
 echo "==> Registering SPLP APIs ke $APIM ..."
 
-# ── Get OAuth2 token ──────────────────────────────────────────────────────────
-TOKEN=$(curl -sf -u "$CID:$CSE" \
-  -X POST "$APIM/oauth2/token" \
-  -d "grant_type=password&username=admin&password=admin&scope=apim:api_create%20apim:api_publish%20apim:api_view%20apim:api_delete" \
-  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
-echo "  ✅ Token diperoleh"
-
-H_AUTH="Authorization: Bearer $TOKEN"
+# ── Use admin Basic auth for PoC (OAuth2 requires valid client registration in WSO2 APIM) ──
+H_AUTH="Authorization: Basic $(echo -n 'admin:admin' | base64)"
+echo "  ✅ Using admin Basic auth"
 H_JSON="Content-Type: application/json"
 PUB="$APIM/api/am/publisher/v4"
 
