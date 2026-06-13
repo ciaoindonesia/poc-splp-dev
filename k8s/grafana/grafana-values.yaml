@@ -52,6 +52,15 @@ datasources:
         uid: prometheus-splp
         url: http://prometheus-server.monitoring.svc.cluster.local:80
         isDefault: false
+        jsonData:
+          timeInterval: 30s
+      - name: Loki
+        type: loki
+        uid: loki-splp
+        url: http://loki.monitoring.svc.cluster.local:3100
+        isDefault: false
+        jsonData:
+          maxLines: 1000
 
 plugins:
   - grafana-clickhouse-datasource
@@ -71,6 +80,18 @@ dashboardProviders:
 
 dashboards:
   splp:
-    overview:
-      url: https://raw.githubusercontent.com/grafana/grafana/main/public/app/plugins/datasource/prometheus/dashboards/prometheus-stats.json
+    ## Node Exporter Full — CPU, Memory, Disk, Network per node
+    node-exporter:
+      gnetId: 1860
+      revision: 37
       datasource: Prometheus
+    ## Kubernetes Cluster Overview — pods, deployments, resource usage
+    k8s-cluster:
+      gnetId: 7249
+      revision: 1
+      datasource: Prometheus
+    ## Loki — Log volume & search
+    loki-logs:
+      gnetId: 13639
+      revision: 2
+      datasource: Loki

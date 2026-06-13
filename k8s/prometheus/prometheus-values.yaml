@@ -1,0 +1,75 @@
+## Prometheus Helm Values for SPLP PoC
+## Chart: prometheus-community/prometheus
+## Release name: prometheus  →  service: prometheus-server.monitoring:80
+
+server:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  retention: "7d"
+
+  persistentVolume:
+    enabled: false
+
+  ## Scrape interval
+  global:
+    scrape_interval: 30s
+    evaluation_interval: 30s
+
+  ## Extra scrape config: scrape SPLP pods with prometheus.io/scrape annotation
+  extraScrapeConfigs: |
+    - job_name: 'splp-apps'
+      kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names: [splp, wso2, monitoring, messaging]
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+          action: keep
+          regex: true
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+          action: replace
+          target_label: __metrics_path__
+          regex: (.+)
+        - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+          action: replace
+          regex: ([^:]+)(?::\d+)?;(\d+)
+          replacement: $1:$2
+          target_label: __address__
+        - source_labels: [__meta_kubernetes_namespace]
+          target_label: namespace
+        - source_labels: [__meta_kubernetes_pod_name]
+          target_label: pod
+        - source_labels: [__meta_kubernetes_pod_label_app]
+          target_label: app
+
+alertmanager:
+  enabled: false
+
+pushgateway:
+  enabled: false
+
+nodeExporter:
+  enabled: true
+  resources:
+    requests:
+      cpu: 30m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+kube-state-metrics:
+  enabled: true
+  resources:
+    requests:
+      cpu: 30m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi

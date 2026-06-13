@@ -31,6 +31,9 @@ flowchart TB
 
         subgraph NS_MON["namespace: monitoring"]
             GRAFANA["📊 Grafana\nDashboard & Alerting\ngrafana.dev-indonesia.com"]
+            PROMETHEUS["📈 Prometheus\nMetrics Collection\n(node + k8s metrics)"]
+            LOKI["📋 Loki\nLog Aggregation\n7-day retention"]
+            PROMTAIL["🔍 Promtail\nLog Collector\n(DaemonSet)"]
         end
 
         subgraph NS_KAFKA["namespace: messaging"]
@@ -85,6 +88,12 @@ flowchart TB
 
     %% Monitoring
     GRAFANA -->|"query"| CH
+    GRAFANA -->|"query metrics"| PROMETHEUS
+    GRAFANA -->|"query logs"| LOKI
+    PROMETHEUS -->|"scrape metrics"| PORTAL
+    PROMETHEUS -->|"scrape metrics"| BACKEND
+    PROMETHEUS -->|"scrape k8s"| NGINX
+    PROMTAIL -->|"collect logs"| LOKI
     KAFKAUI -->|"monitor"| KAFKA
 
     %% Auth flow
@@ -106,7 +115,7 @@ flowchart TB
     class PORTAL,BACKEND app
     class APIM,IS wso2
     class CH data
-    class GRAFANA monitor
+    class GRAFANA,PROMETHEUS,LOKI,PROMTAIL monitor
     class KAFKA,KAFKAUI kafka
     class M1,M2,M3,M4,M5,M6,M7,M8,M9 mock
     class CERTMGR ingress

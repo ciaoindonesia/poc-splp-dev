@@ -12,7 +12,7 @@ Platform Pertukaran Data Pemerintah (SPLP) — PoC untuk demo integrasi layanan 
 | Identity | WSO2 Identity Server 7.3.0 |
 | Streaming | Apache Kafka |
 | Analytics DB | ClickHouse |
-| Monitoring | Grafana |
+| Monitoring | Grafana + Prometheus + Loki |
 | Container | k3d (Kubernetes in Docker) |
 
 ## Setup Cepat
@@ -61,6 +61,8 @@ bash scripts/set-domain.sh dev-indonesia.com
 | **WSO2 APIM Carbon Console** | https://apim.dev-indonesia.com/carbon | `admin` | `admin` |
 | **WSO2 Identity Server** | https://is.dev-indonesia.com/console | `admin` | `admin` |
 | **Grafana** | https://grafana.dev-indonesia.com | anonymous | — |
+| **Prometheus** | internal (monitoring ns) | — | — |
+| **Loki** | internal (monitoring ns) | — | — |
 | **ClickHouse** | https://clickhouse.dev-indonesia.com | `splp_user` | `splp_pass_2026` |
 | **Kafka UI** | https://kafka-ui.dev-indonesia.com | — | — |
 
@@ -108,7 +110,8 @@ poc-splp-dev/
 │   ├── set-domain.sh            # Ganti domain (patch semua manifest)
 │   ├── 04-register-apim-apis.sh # Daftar 12 APIs ke WSO2 APIM
 │   ├── 05-setup-https.sh        # Install cert-manager + TLS
-│   └── 06-deploy-kafka.sh       # Deploy Strimzi Kafka + Kafka UI
+│   ├── 06-deploy-kafka.sh       # Deploy Strimzi Kafka + Kafka UI
+│   └── 07-deploy-observability.sh  # Deploy Prometheus + Loki
 └── domain.conf          # Konfigurasi domain (single source of truth)
 ```
 
