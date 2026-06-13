@@ -28,31 +28,51 @@
   },
   "Datadir": "/var/lib/netbird/",
   "HttpConfig": {
-    "LetsEncryptDomain": "netbird.dev-indonesia.com",
+    "LetsEncryptDomain": "",
     "CertFile": "",
     "CertKey": "",
-    "AuthAudience": "netbird",
-    "AuthIssuer": "netbird.dev-indonesia.com",
-    "AuthKeysLocation": "",
-    "OIDCConfigEndpoint": ""
+    "AuthAudience": "netbird-dashboard",
+    "AuthIssuer": "https://is.dev-indonesia.com/oauth2/token",
+    "AuthKeysLocation": "https://is.dev-indonesia.com/oauth2/jwks",
+    "OIDCConfigEndpoint": "https://is.dev-indonesia.com/oauth2/oidcdiscovery/.well-known/openid-configuration"
   },
   "IdpManagerConfig": {
-    "ManagerType": "none"
+    "ManagerType": "generic",
+    "ClientConfig": {
+      "Issuer": "https://is.dev-indonesia.com/oauth2/token",
+      "TokenEndpoint": "https://is.dev-indonesia.com/oauth2/token",
+      "ClientID": "netbird-mgmt-client",
+      "ClientSecret": "NETBIRD_MGMT_CLIENT_SECRET",
+      "GrantType": "client_credentials"
+    }
   },
   "DeviceAuthorizationFlow": {
-    "Provider": "none"
+    "Provider": "generic",
+    "ProviderConfig": {
+      "ClientID": "netbird-device",
+      "Audience": "netbird-dashboard",
+      "Domain": "is.dev-indonesia.com",
+      "TokenEndpoint": "https://is.dev-indonesia.com/oauth2/token",
+      "DeviceAuthEndpoint": "https://is.dev-indonesia.com/oauth2/device_authorize",
+      "Scopes": ["openid", "profile", "email"],
+      "UseIDToken": true,
+      "RedirectURLs": []
+    }
   },
   "PKCEAuthorizationFlow": {
     "ProviderConfig": {
-      "ClientID": "",
+      "ClientID": "netbird-dashboard",
       "ClientSecret": "",
-      "Domain": "",
-      "Audience": "",
-      "TokenEndpoint": "",
-      "DeviceAuthEndpoint": "",
-      "Scopes": [],
-      "UseIDToken": false,
-      "RedirectURLs": []
+      "Domain": "is.dev-indonesia.com",
+      "Audience": "netbird-dashboard",
+      "TokenEndpoint": "https://is.dev-indonesia.com/oauth2/token",
+      "DeviceAuthEndpoint": "https://is.dev-indonesia.com/oauth2/device_authorize",
+      "Scopes": ["openid", "profile", "email"],
+      "UseIDToken": true,
+      "RedirectURLs": [
+        "https://netbird.dev-indonesia.com/auth",
+        "http://localhost:53000"
+      ]
     }
   }
 }

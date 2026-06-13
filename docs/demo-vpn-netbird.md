@@ -36,7 +36,33 @@ Skenario yang didemonstrasikan adalah **Scenario B: Machine-to-Machine VPN** —
 
 ## Persiapan (Dilakukan Sebelum Demo)
 
-### A. Deploy NetBird Management Server di Server
+### A. Register OAuth Apps di WSO2 IS
+
+NetBird menggunakan WSO2 IS sebagai Identity Provider (SSO/OIDC).
+Jalankan script registrasi **setelah WSO2 IS running**:
+
+```bash
+bash ~/poc-splp-dev/scripts/08b-register-netbird-wso2is.sh
+```
+
+Output akan menampilkan Client ID yang perlu dicatat:
+```
+✅ netbird-dashboard Client ID: aBcDeFgH1234567890
+✅ netbird-device    Client ID: xYzAbCdEfGhIjKlMnO
+```
+
+Update `netbird/management.json` — ganti `netbird-dashboard` dan `netbird-device`
+dengan Client ID yang didapat di atas.
+
+Atau lakukan manual di WSO2 IS Console (`https://is.dev-indonesia.com/console`):
+- **Applications** → **New Application** → **Standard-Based Application**
+- App 1: `netbird-dashboard` — grant: `authorization_code`, PKCE enabled
+  - Callback: `https://netbird.dev-indonesia.com/auth`
+- App 2: `netbird-device` — grant: `urn:ietf:params:oauth:grant-type:device_code`
+
+---
+
+### B. Deploy NetBird Management Server di Server
 
 ```bash
 # Di server: 172.105.122.119
@@ -340,26 +366,24 @@ Tunjukkan **Network Map** di dashboard — visualisasi peer-to-peer mesh.
 
 | Aspek | PoC (sekarang) | Production |
 |-------|----------------|-----------|
-| IdP | Built-in / simple token | WSO2 IS (SSO/OIDC) |
+| IdP | **WSO2 IS** (sudah diimplementasi) | WSO2 IS (sama) |
 | TURN server | Coturn di server yang sama | Dedicated coturn cluster |
 | HA | Single instance | Multi-region management |
 | PKI | Self-signed | Enterprise CA |
 | Enrollment | Manual setup key | Automated via API |
 
-### Integrasi dengan WSO2 IS (untuk Production)
+### Integrasi WSO2 IS (sudah dikonfigurasi di PoC ini)
 
-NetBird bisa dikonfigurasi menggunakan WSO2 IS sebagai IdP (OIDC):
+NetBird di PoC ini **sudah menggunakan WSO2 IS** sebagai IdP. Login ke NetBird dashboard
+menggunakan akun yang sama dengan portal SPLP — unified identity management.
 
-```json
-// management.json - tambahkan
-"HttpConfig": {
-  "OIDCConfigEndpoint": "https://is.dev-indonesia.com/oauth2/oidcdiscovery/.well-known/openid-configuration",
-  "AuthAudience": "netbird-client-id",
-  "AuthIssuer": "https://is.dev-indonesia.com/oauth2/token"
-}
+```
+Akun admin WSO2 IS → login ke portal SPLP
+                   → login ke NetBird dashboard
+                   → authorize NetBird peer (device code flow)
 ```
 
-Dengan ini, user login ke NetBird menggunakan akun WSO2 IS yang sama dengan portal SPLP.
+Konfigurasi ada di `netbird/management.json` dan `netbird/docker-compose.yml`.
 
 ---
 

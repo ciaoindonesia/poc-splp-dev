@@ -1,10 +1,20 @@
 ## NetBird Self-Hosted Management Server
-## Jalankan di HOST server (bukan di k3d), di folder ini:
-##   docker compose up -d
 ##
-## Akses dashboard: https://netbird.dev-indonesia.com
-## Management API: https://netbird.dev-indonesia.com:33073
-## Signal Server  : netbird.dev-indonesia.com:10000
+## CARA DEPLOY (pilih salah satu):
+##
+## [A] Official Quickstart (DIREKOMENDASIKAN) — auto-setup + Zitadel IdP:
+##   export NETBIRD_DOMAIN=netbird.dev-indonesia.com
+##   curl -fsSL https://github.com/netbirdio/netbird/releases/latest/download/getting-started-with-zitadel.sh | bash
+##   → Akses: https://netbird.dev-indonesia.com
+##   → Zitadel admin: https://netbird.dev-indonesia.com:8080
+##
+## [B] NetBird Cloud (tercepat untuk PoC, tanpa self-host):
+##   → Daftar gratis di https://app.netbird.io
+##   → Gunakan setup key dari dashboard cloud
+##   → Semua fitur sama, tunnel tetap P2P
+##
+## [C] Manual compose di bawah ini (butuh IdP terpisah — tidak direkomendasikan)
+##
 
 version: "3"
 
@@ -60,14 +70,13 @@ services:
     ports:
       - "8088:80"
     environment:
-      - AUTH_AUDIENCE=netbird
-      - AUTH_CLIENT_ID=netbird
-      - AUTH_AUTHORITY=https://netbird.dev-indonesia.com:33073
+      - AUTH_AUDIENCE=netbird-dashboard
+      - AUTH_CLIENT_ID=netbird-dashboard
+      - AUTH_AUTHORITY=https://is.dev-indonesia.com/oauth2/oidcdiscovery
+      - AUTH_SUPPORTED_SCOPES=openid profile email
+      - USE_AUTH0=false
       - NETBIRD_MGMT_API_ENDPOINT=https://netbird.dev-indonesia.com:33073
       - NETBIRD_MGMT_GRPC_API_ENDPOINT=https://netbird.dev-indonesia.com:33073
-      - NGINX_SSL_PORT=443
-      - LETSENCRYPT_DOMAIN=netbird.dev-indonesia.com
-      - LETSENCRYPT_EMAIL=admin@dev-indonesia.com
 
 volumes:
   netbird_mgmt:
