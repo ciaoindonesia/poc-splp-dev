@@ -26,7 +26,7 @@ export default function Header({ onToggleSidebar, currentTime, sidebarOpen }: Pr
   const info = PAGE_TITLES[path] ?? PAGE_TITLES['/']
 
   return (
-    <header className="bg-white border-b border-slate-100 px-6 py-3.5 flex items-center gap-4 shrink-0 shadow-sm z-10">
+    <header className="bg-white border-b border-slate-100 px-6 py-3.5 flex items-center gap-4 shrink-0 shadow-sm z-30 relative">
       <button
         onClick={onToggleSidebar}
         className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors"
@@ -123,7 +123,7 @@ export default function Header({ onToggleSidebar, currentTime, sidebarOpen }: Pr
             </div>
           </button>
           {userMenuOpen && (
-            <div className="absolute right-0 bottom-full mb-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 z-[200] overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-100">
                 <p className="text-xs font-bold text-slate-800">{user?.name}</p>
                 <p className="text-[10px] text-slate-500">{user?.email}</p>
