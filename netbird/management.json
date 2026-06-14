@@ -88,8 +88,8 @@
             "Scope": "openid profile email",
             "UseIDToken": true,
             "RedirectURLs": [
-                "https://netbird.dev-indonesia.com/auth",
-                "http://localhost:53000"
+                "http://localhost:53000",
+                "https://netbird.dev-indonesia.com/auth"
             ],
             "DisablePromptLogin": false,
             "LoginFlag": 0
