@@ -60,18 +60,18 @@
         "ZitadelClientCredentials": null
     },
     "DeviceAuthorizationFlow": {
-        "Provider": "generic",
+        "Provider": "none",
         "ProviderConfig": {
-            "ClientID": "iDqDqqocOd3RtklMi0rHin8KvhQa",
+            "ClientID": "",
             "ClientSecret": "",
-            "Domain": "is.dev-indonesia.com",
-            "Audience": "88ySb5TirNgrz5TFL_SlZ98qjRwa",
-            "TokenEndpoint": "https://is.dev-indonesia.com/oauth2/token",
-            "DeviceAuthEndpoint": "https://is.dev-indonesia.com/oauth2/device_authorize",
+            "Domain": "",
+            "Audience": "",
+            "TokenEndpoint": "",
+            "DeviceAuthEndpoint": "",
             "AuthorizationEndpoint": "",
-            "Scope": "openid",
-            "UseIDToken": true,
-            "RedirectURLs": [],
+            "Scope": "",
+            "UseIDToken": false,
+            "RedirectURLs": null,
             "DisablePromptLogin": false,
             "LoginFlag": 0
         }
