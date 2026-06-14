@@ -76,6 +76,7 @@ services:
       - AUTH_SUPPORTED_SCOPES=openid profile email
       - AUTH_REDIRECT_URI=/auth
       - AUTH_SILENT_REDIRECT_URI=/silent-auth
+      - AUTH_POST_LOGOUT_REDIRECT_URI=https://netbird.dev-indonesia.com
       - USE_AUTH0=false
       - NETBIRD_MGMT_API_ENDPOINT=https://netbird-mgmt.dev-indonesia.com
       - NETBIRD_MGMT_GRPC_API_ENDPOINT=https://netbird-mgmt.dev-indonesia.com
