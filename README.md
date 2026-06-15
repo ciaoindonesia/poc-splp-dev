@@ -56,6 +56,7 @@ bash scripts/set-domain.sh dev-indonesia.com
 |---------|-----|----------|----------|
 | **SPLP Portal** | https://dev-indonesia.com | lihat Akun Demo | — |
 | **Backend API** | https://api-backend.dev-indonesia.com | — | — |
+| **WSO2 API Gateway** | https://api.dev-indonesia.com | — | Bearer Token |
 | **WSO2 APIM Publisher** | https://apim.dev-indonesia.com/publisher | `admin` | `admin` |
 | **WSO2 APIM Developer Portal** | https://apim.dev-indonesia.com/devportal | `admin` | `admin` |
 | **WSO2 APIM Admin** | https://apim.dev-indonesia.com/admin | `admin` | `admin` |
@@ -75,7 +76,7 @@ bash scripts/set-domain.sh dev-indonesia.com
 | `https://apim.dev-indonesia.com/api/am/publisher/v4` | Publisher API |
 | `https://apim.dev-indonesia.com/api/am/devportal/v3` | Developer Portal API |
 | `https://apim.dev-indonesia.com/oauth2/token` | OAuth2 Token endpoint |
-| `https://apim.dev-indonesia.com/{context}` | API Gateway (via ingress) |
+| `https://api.dev-indonesia.com/{context}/{version}` | API Gateway — invoke API |
 
 ## Akun Demo
 
