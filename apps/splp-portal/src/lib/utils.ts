@@ -47,6 +47,11 @@ export function deriveBackendUrl(): string {
   return `${proto()}://api-backend.${baseDomain()}`
 }
 
+export function deriveWsUrl(): string {
+  const base = deriveBackendUrl()
+  return base.replace(/^http/, 'ws') + '/ws/events'
+}
+
 export function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`

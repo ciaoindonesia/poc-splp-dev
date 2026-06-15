@@ -2,6 +2,7 @@ const express = require('express')
 const cors    = require('cors')
 const { v4: uuidv4 } = require('uuid')
 const { WebSocketServer } = require('ws')
+const { Kafka, logLevel } = require('kafkajs')
 const http  = require('http')
 const https = require('https')
 const net   = require('net')
@@ -19,7 +20,7 @@ const PORT = process.env.PORT || 3002
 const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
 const AGENCIES = ['dukcapil','bpjs-kes','bpjs-tk','djp','kemendagri','kemenkes','kemensos','polri','kemenkumham','ppatk']
 const APIS     = ['Verifikasi NIK','Status Kepesertaan BPJS','Verifikasi NPWP','Data Kependudukan','Verifikasi JHT','Data STNK/BPKB','Data Bansos','Status Pajak','Rekam Medis','Status WNI/WNA']
-const TOPICS   = ['splp.data-exchange','splp.api-events','splp.notifications','splp.audit-log','agency.dukcapil','agency.bpjs','agency.djp']
+const TOPICS   = ['splp-data-exchange','splp-api-events','splp-notifications','splp-audit-logs','dukcapil-nik-verify','bpjs-kepesertaan','djp-npwp-verify','kemensos-bansos']
 
 const mockApiResponse = (apiName) => ({
   request_id:    uuidv4(),
@@ -635,29 +636,106 @@ const broadcast = (data) => {
 }
 
 wss.on('connection', (ws) => {
-  ws.send(JSON.stringify({ type: 'connected', message: 'SPLP live event stream connected' }))
+  ws.send(JSON.stringify({ type: 'connected', message: 'SPLP live event stream connected', kafka: kafkaReady }))
 })
 
+/* ── Real Kafka integration (producer + consumer) ── */
+const KAFKA_BROKER = `${SVC.kafkaHost}:${SVC.kafkaPort}`
+const kafka = new Kafka({
+  clientId: 'splp-backend',
+  brokers: [KAFKA_BROKER],
+  logLevel: logLevel.ERROR,
+  retry: { retries: 10, initialRetryTime: 1000, maxRetryTime: 15000 },
+})
+
+let kafkaProducer = null
+let kafkaReady = false
+
+async function initKafka() {
+  try {
+    kafkaProducer = kafka.producer()
+    await kafkaProducer.connect()
+    kafkaReady = true
+    console.log(`✅  Kafka producer connected → ${KAFKA_BROKER}`)
+
+    const consumer = kafka.consumer({ groupId: `splp-backend-feed-${uuidv4().substring(0, 8)}` })
+    await consumer.connect()
+    for (const topic of TOPICS) {
+      await consumer.subscribe({ topic, fromBeginning: false })
+    }
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        let value
+        try { value = JSON.parse(message.value.toString()) }
+        catch { value = message.value ? message.value.toString() : null }
+        broadcast({
+          type:        'kafka',
+          id:          uuidv4(),
+          timestamp:   new Date(Number(message.timestamp) || Date.now()).toISOString(),
+          topic,
+          partition,
+          offset:      message.offset,
+          key:         message.key ? message.key.toString() : null,
+          value,
+          source:      (value && value.source) || (message.key ? message.key.toString() : 'unknown'),
+          target:      (value && value.target) || 'broadcast',
+          messageType: (value && value.type) || 'MESSAGE',
+          payloadSize: message.value ? message.value.length : 0,
+          status:      'delivered',
+        })
+      },
+    })
+    console.log(`✅  Kafka consumer subscribed to ${TOPICS.length} topics`)
+  } catch (err) {
+    kafkaReady = false
+    console.error(`⚠️  Kafka init failed: ${err.message}. Retry in 10s...`)
+    setTimeout(initKafka, 10000)
+  }
+}
+
+// POST /api/kafka/produce — publish a real message to Kafka
+app.post('/api/kafka/produce', async (req, res) => {
+  const { topic, payload, key } = req.body || {}
+  if (!topic) return res.status(400).json({ error: 'topic required' })
+  if (!kafkaReady || !kafkaProducer) return res.status(503).json({ error: 'Kafka producer not ready' })
+  const value = typeof payload === 'string' ? payload : JSON.stringify(payload ?? {})
+  try {
+    const meta = await kafkaProducer.send({ topic, messages: [{ key: key || 'portal-splp', value }] })
+    const r = (meta && meta[0]) || {}
+    res.json({
+      ok:          true,
+      topic,
+      partition:   r.partition ?? 0,
+      offset:      r.baseOffset ?? r.offset ?? null,
+      timestamp:   new Date().toISOString(),
+      payloadSize: Buffer.byteLength(value),
+    })
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message })
+  }
+})
+
+// GET /api/kafka/status — connection health + subscribed topics
+app.get('/api/kafka/status', (req, res) => {
+  res.json({ ready: kafkaReady, broker: KAFKA_BROKER, topics: TOPICS })
+})
+
+// Mock API-call events keep flowing on the WS feed (non-Kafka traffic)
 setInterval(() => {
-  const isKafka = Math.random() > 0.5
   broadcast({
-    type:      isKafka ? 'kafka' : 'api',
-    timestamp: new Date().toISOString(),
+    type:      'api',
     id:        uuidv4(),
-    ...(isKafka
-      ? mockKafkaMessage(TOPICS[rand(0, TOPICS.length - 1)])
-      : {
-          api:     APIS[rand(0, APIS.length - 1)],
-          from:    AGENCIES[rand(0, AGENCIES.length - 1)],
-          to:      AGENCIES[rand(0, AGENCIES.length - 1)],
-          status:  Math.random() > 0.05 ? 'SUCCESS' : 'ERROR',
-          latency: rand(80, 450),
-        }
-    ),
+    timestamp: new Date().toISOString(),
+    api:       APIS[rand(0, APIS.length - 1)],
+    from:      AGENCIES[rand(0, AGENCIES.length - 1)],
+    to:        AGENCIES[rand(0, AGENCIES.length - 1)],
+    status:    Math.random() > 0.05 ? 'SUCCESS' : 'ERROR',
+    latency:   rand(80, 450),
   })
-}, 1200)
+}, 2500)
 
 server.listen(PORT, () => {
   console.log(`✅  SPLP Backend running on http://localhost:${PORT}`)
   console.log(`🔌  WebSocket live events on ws://localhost:${PORT}/ws/events`)
+  initKafka()
 })

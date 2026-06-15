@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { Send, RefreshCw, Play, Zap, MessageSquare, ChevronDown } from 'lucide-react'
-import { formatTimestamp, formatBytes, AGENCIES, MOCK_APIS } from '../lib/utils'
-import { generateKafkaMessage, type KafkaMessage } from '../lib/mockData'
+import { formatTimestamp, formatBytes, AGENCIES, MOCK_APIS, deriveBackendUrl, deriveWsUrl } from '../lib/utils'
+import { type KafkaMessage } from '../lib/mockData'
+
+const BACKEND = deriveBackendUrl()
+const KAFKA_TOPICS = ['splp-data-exchange', 'splp-api-events', 'splp-audit-logs', 'splp-notifications', 'dukcapil-nik-verify', 'bpjs-kepesertaan', 'djp-npwp-verify', 'kemensos-bansos']
 
 const SAMPLE_PAYLOADS: Record<string, string> = {
   'Verifikasi NIK': JSON.stringify({ nik: '3201234567890001', nama: 'Ahmad Fauzi', tgl_lahir: '1985-03-15' }, null, 2),
@@ -25,10 +28,12 @@ export default function DataExchange() {
   const [history, setHistory] = useState<Array<{ id: string; time: string; api: string; latency: number; status: number }>>([])
 
   // Async state
-  const [kafkaTopic, setKafkaTopic] = useState('splp.data.exchange')
+  const [kafkaTopic, setKafkaTopic] = useState('splp-data-exchange')
   const [kafkaPayload, setKafkaPayload] = useState(DEFAULT_PAYLOAD)
   const [messages, setMessages] = useState<KafkaMessage[]>([])
   const [producing, setProducing] = useState(false)
+  const [wsConnected, setWsConnected] = useState(false)
+  const [produceError, setProduceError] = useState<string | null>(null)
   const msgRef = useRef<HTMLDivElement>(null)
 
   const api = MOCK_APIS.find(a => a.id === selectedApi)
@@ -38,11 +43,40 @@ export default function DataExchange() {
   }, [selectedApi])
 
   useEffect(() => {
-    const iv = setInterval(() => {
-      const msg = generateKafkaMessage()
-      setMessages(prev => [msg, ...prev].slice(0, 100))
-    }, 2000)
-    return () => clearInterval(iv)
+    let ws: WebSocket | null = null
+    let retry: ReturnType<typeof setTimeout> | null = null
+    let closed = false
+
+    const connect = () => {
+      ws = new WebSocket(deriveWsUrl())
+      ws.onopen = () => setWsConnected(true)
+      ws.onclose = () => {
+        setWsConnected(false)
+        if (!closed) retry = setTimeout(connect, 3000)
+      }
+      ws.onerror = () => ws?.close()
+      ws.onmessage = (ev) => {
+        try {
+          const d = JSON.parse(ev.data)
+          if (d.type !== 'kafka') return
+          const msg: KafkaMessage = {
+            id: d.id,
+            timestamp: d.timestamp,
+            topic: d.topic,
+            partition: d.partition ?? 0,
+            offset: Number(d.offset) || 0,
+            source: d.source || 'unknown',
+            target: d.target || 'broadcast',
+            type: d.messageType || 'MESSAGE',
+            payloadSize: d.payloadSize ?? 0,
+            status: d.status === 'delivered' ? 'delivered' : 'failed',
+          }
+          setMessages(prev => [msg, ...prev].slice(0, 100))
+        } catch { /* ignore non-JSON frames */ }
+      }
+    }
+    connect()
+    return () => { closed = true; if (retry) clearTimeout(retry); ws?.close() }
   }, [])
 
   const handleSyncExchange = async () => {
@@ -87,21 +121,28 @@ export default function DataExchange() {
 
   const handleProduceMessage = async () => {
     setProducing(true)
-    await new Promise(r => setTimeout(r, 300))
-    const msg: KafkaMessage = {
-      id: Math.random().toString(36).substring(2, 8).toUpperCase(),
-      timestamp: new Date().toISOString(),
-      topic: kafkaTopic,
-      partition: Math.floor(Math.random() * 3),
-      offset: Math.floor(Math.random() * 999999),
-      source: 'Portal SPLP',
-      target: 'Broadcast',
-      type: 'DATA_REQUEST',
-      payloadSize: new TextEncoder().encode(kafkaPayload).length,
-      status: 'delivered',
+    setProduceError(null)
+    try {
+      let payloadObj: unknown
+      try { payloadObj = JSON.parse(kafkaPayload) }
+      catch { payloadObj = { raw: kafkaPayload } }
+      // Tandai pesan agar muncul rapi di consumer feed
+      const enriched = { source: 'Portal SPLP', target: 'Broadcast', type: 'DATA_REQUEST', ...(payloadObj as object) }
+      const res = await fetch(`${BACKEND}/api/kafka/produce`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: kafkaTopic, payload: enriched, key: 'Portal SPLP' }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setProduceError(err.error || `HTTP ${res.status}`)
+      }
+      // Pesan akan muncul otomatis di feed via WebSocket (consumer Kafka)
+    } catch (e: unknown) {
+      setProduceError(e instanceof Error ? e.message : 'Network error')
+    } finally {
+      setProducing(false)
     }
-    setMessages(prev => [msg, ...prev].slice(0, 100))
-    setProducing(false)
   }
 
   return (
@@ -280,7 +321,7 @@ Cache-Control: no-cache, no-store`}
                 <div>
                   <label className="form-label">Topic</label>
                   <select className="form-select" value={kafkaTopic} onChange={e => setKafkaTopic(e.target.value)}>
-                    {['splp.data.exchange', 'splp.api.events', 'splp.audit.logs', 'splp.notifications', 'dukcapil.nik.verify', 'bpjs.kepesertaan', 'djp.npwp.verify', 'kemensos.bansos'].map(t => (
+                    {KAFKA_TOPICS.map(t => (
                       <option key={t} value={t}>{t}</option>
                     ))}
                   </select>
@@ -301,6 +342,9 @@ Cache-Control: no-cache, no-store`}
                   {producing ? <RefreshCw size={16} className="animate-spin" /> : <Play size={16} />}
                   {producing ? 'Publishing ke Kafka...' : 'Publish Message'}
                 </button>
+                {produceError && (
+                  <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">⚠️ {produceError}</p>
+                )}
               </div>
             </div>
 
@@ -333,12 +377,17 @@ Cache-Control: no-cache, no-store`}
                   <h3 className="section-title text-base">Kafka Consumer Feed</h3>
                   <p className="text-xs text-slate-400 mt-0.5">Real-time messages dari semua topics</p>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold">
-                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
-                  Consuming
+                <div className={`flex items-center gap-1.5 text-xs font-semibold ${wsConnected ? 'text-emerald-600' : 'text-slate-400'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${wsConnected ? 'bg-emerald-500 animate-ping' : 'bg-slate-300'}`} />
+                  {wsConnected ? 'Consuming' : 'Disconnected'}
                 </div>
               </div>
               <div ref={msgRef} className="space-y-1.5 max-h-[500px] overflow-y-auto scrollbar-hide">
+                {messages.length === 0 && (
+                  <div className="text-center text-slate-400 text-xs py-10">
+                    Menunggu pesan Kafka... Publish pesan untuk melihatnya muncul di sini.
+                  </div>
+                )}
                 {messages.map(msg => (
                   <div key={msg.id} className="font-mono text-xs bg-slate-900 text-green-400 rounded-lg px-3 py-2 space-y-0.5">
                     <div className="flex items-center gap-2 text-slate-400">
