@@ -122,6 +122,12 @@ data:
     http_endpoint = "http://api.SPLP_DOMAIN"
     https_endpoint = "https://api.SPLP_DOMAIN"
 
+    [[apim.gateway.environment.virtual_host]]
+    ws_endpoint = "ws://api.SPLP_DOMAIN"
+    wss_endpoint = "wss://api.SPLP_DOMAIN"
+    http_endpoint = "http://api.SPLP_DOMAIN"
+    https_endpoint = "https://api.SPLP_DOMAIN"
+
     [apim.cors]
     allow_origins = "*"
     allow_methods = ["GET","PUT","POST","DELETE","PATCH","OPTIONS"]
@@ -130,6 +136,18 @@ data:
 
     [transport.https.properties]
     proxyPort = 443
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wso2-apim-db
+  namespace: wso2
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
 ---
 apiVersion: v1
 kind: Service
