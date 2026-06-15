@@ -30,7 +30,7 @@ spec:
                 && sed -i 's|proxyPort = .*|proxyPort = 443|g' "$CONF" \
                 || printf '\n[transport.https.properties]\nproxyPort = 443\n' >> "$CONF"
               if ! grep -q 'apim.gateway.environment.virtual_host' "$CONF"; then
-                printf '\n[[apim.gateway.environment.virtual_host]]\nhttp_endpoint = "http://%s"\nhttps_endpoint = "https://%s"\n' "$(API_HOSTNAME)" "$(API_HOSTNAME)" >> "$CONF"
+                printf '\n[[apim.gateway.environment.virtual_host]]\nhost = "%s"\nhttp_endpoint = "http://%s"\nhttps_endpoint = "https://%s"\n' "$(API_HOSTNAME)" "$(API_HOSTNAME)" "$(API_HOSTNAME)" >> "$CONF"
               fi
               exec /home/wso2carbon/docker-entrypoint.sh
           env:
