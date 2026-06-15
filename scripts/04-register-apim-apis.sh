@@ -35,6 +35,7 @@ create_api() {
 import json, sys
 print(json.dumps({
   'name': '$name', 'version': '$version', 'context': '$context',
+  'isDefaultVersion': True,
   'description': '$desc', 'type': 'HTTP', 'transport': ['http','https'],
   'tags': $tags, 'policies': ['Unlimited'],
   'operations': [{'target': '$path', 'verb': '$method', 'authType': 'None', 'throttlingPolicy': 'Unlimited'}],

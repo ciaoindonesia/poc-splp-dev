@@ -76,7 +76,44 @@ bash scripts/set-domain.sh dev-indonesia.com
 | `https://apim.dev-indonesia.com/api/am/publisher/v4` | Publisher API |
 | `https://apim.dev-indonesia.com/api/am/devportal/v3` | Developer Portal API |
 | `https://apim.dev-indonesia.com/oauth2/token` | OAuth2 Token endpoint |
-| `https://api.dev-indonesia.com/{context}/{version}` | API Gateway — invoke API |
+| `https://api.dev-indonesia.com/{context}/{resource}` | API Gateway — invoke API |
+
+### API Gateway — Daftar Endpoint
+
+Semua API di-deploy sebagai **default version**, sehingga URL **tidak perlu** menyertakan versi.
+Format: `https://api.dev-indonesia.com{context}{resource}`
+
+| API | Method | URL |
+|-----|--------|-----|
+| **VerifikasiNIK** | `POST` | `https://api.dev-indonesia.com/dukcapil/v2/verify-nik` |
+| **DataKependudukan** | `GET` | `https://api.dev-indonesia.com/dukcapil/v2/data/data-kependudukan` |
+| **StatusKepesertaanBPJS** | `POST` | `https://api.dev-indonesia.com/bpjs-kes/v1/kepesertaan` |
+| **TagihanBPJSKesehatan** | `GET` | `https://api.dev-indonesia.com/bpjs-kes/v1/tagihan/tagihan` |
+| **VerifikasiNPWP** | `POST` | `https://api.dev-indonesia.com/djp/v3/verify-npwp` |
+| **StatusPajakBadan** | `GET` | `https://api.dev-indonesia.com/djp/v2/status-badan` |
+| **VerifikasiJHT** | `POST` | `https://api.dev-indonesia.com/bpjs-tk/v1/kepesertaan-jht` |
+| **DataSTNKBPKB** | `POST` | `https://api.dev-indonesia.com/polri/v1/kendaraan` |
+| **DataBansosPenerima** | `GET` | `https://api.dev-indonesia.com/kemensos/v1/bansos` |
+| **RekamMedisElektronik** | `GET` | `https://api.dev-indonesia.com/kemenkes/v2/rekam-medis` |
+| **StatusWNIWNA** | `POST` | `https://api.dev-indonesia.com/imigrasi/v1/status-wni` |
+| **DataPerizinanUsaha** | `GET` | `https://api.dev-indonesia.com/kemendagri/v1/perizinan` |
+
+**Contoh invoke:**
+
+```bash
+curl -X POST 'https://api.dev-indonesia.com/dukcapil/v2/verify-nik' \
+  -H 'Authorization: Bearer <token>' \
+  -H 'Content-Type: application/json' \
+  -d '{"nik":"3201234567890001","nama":"Ahmad Fauzi"}'
+```
+
+> **Catatan deploy API ke gateway**: Database WSO2 APIM (H2) bersifat *ephemeral* — setiap
+> pod restart, API perlu diregister & deploy ulang:
+> ```bash
+> bash scripts/04-register-apim-apis.sh        # register 12 API
+> bash scripts/05b-deploy-apim-gateway.sh      # deploy ke gateway
+> ```
+> Sinkronisasi gateway berlangsung asinkron (~60 detik) setelah deploy.
 
 ## Akun Demo
 
