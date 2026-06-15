@@ -135,11 +135,15 @@ export default function ApiCatalog() {
   const runTest = async (api: CatalogApi) => {
     setTesting(true); setTestResult(null)
     const t0 = Date.now()
+    // Invoke melalui WSO2 API Gateway (real flow). Endpoint sudah berupa URL gateway.
+    const gwUrl = /^https?:\/\//.test(api.endpoint) ? api.endpoint : `${API_GW}${api.endpoint}`
     try {
-      const backendMockPath = api.endpoint.replace(/^https?:\/\/[^/]+/, '')
-      const res = await fetch(`${BACKEND}/api/mock${backendMockPath}`, {
+      const res = await fetch(gwUrl, {
         method: api.method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer demo-token',
+        },
         ...(api.method !== 'GET' && api.sampleRequest ? { body: JSON.stringify(api.sampleRequest) } : {}),
       })
       const body = await res.json()
