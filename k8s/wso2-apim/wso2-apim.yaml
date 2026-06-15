@@ -29,12 +29,17 @@ spec:
               grep -q '\[transport\.https\.properties\]' "$CONF" \
                 && sed -i 's|proxyPort = .*|proxyPort = 443|g' "$CONF" \
                 || printf '\n[transport.https.properties]\nproxyPort = 443\n' >> "$CONF"
+              if ! grep -q 'apim.gateway.environment.virtual_host' "$CONF"; then
+                printf '\n[[apim.gateway.environment.virtual_host]]\nhttp_endpoint = "http://%s"\nhttps_endpoint = "https://%s"\n' "$(API_HOSTNAME)" "$(API_HOSTNAME)" >> "$CONF"
+              fi
               exec /home/wso2carbon/docker-entrypoint.sh
           env:
             - name: JAVA_OPTS
               value: "-Xms512m -Xmx2g"
             - name: APIM_HOSTNAME
               value: "apim.SPLP_DOMAIN"
+            - name: API_HOSTNAME
+              value: "api.SPLP_DOMAIN"
           ports:
             - containerPort: 9443
               name: https

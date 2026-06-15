@@ -114,7 +114,7 @@ spec:
               service:
                 name: wso2-apim
                 port:
-                  number: 8280
+                  number: 8243
 ---
 ## WSO2 Identity Server
 apiVersion: networking.k8s.io/v1
