@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-DOMAIN="${BASE_DOMAIN:-$(grep BASE_DOMAIN "$(dirname "$0")/../domain.conf" 2>/dev/null | cut -d= -f2)}"
+DOMAIN="${BASE_DOMAIN:-$(grep '^BASE_DOMAIN=' "$(dirname "$0")/../domain.conf" 2>/dev/null | cut -d= -f2 | head -1)}"
 APIM_URL="https://apim.${DOMAIN}"
 VHOST="api.${DOMAIN}"
 CREDS="admin:admin"
