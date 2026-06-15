@@ -93,6 +93,7 @@ spec:
   tls:
     - hosts:
         - apim.SPLP_DOMAIN
+        - api.SPLP_DOMAIN
       secretName: tls-apim-SPLP_DOMAIN
   rules:
     - host: apim.SPLP_DOMAIN
